@@ -1,0 +1,8 @@
+[package]
+name = "red-blox/fetch"
+version = "2.0.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+Future = "red-blox/future@1.0.0"

@@ -1,0 +1,51 @@
+{
+  "name": "OpenDay - Framework",
+  "tree": {
+    "$className": "DataModel",
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$ignoreUnknownInstances": true
+    },
+
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/Shared",
+
+        "Assets": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true,
+
+          "Maps": {
+            "$className": "Folder",
+            "$ignoreUnknownInstances": true
+          }
+        }
+      },
+      "Controllers": {
+        "$className": "Folder",
+        "$path": "src/Client/Controllers"
+      },
+      "Packages":{
+        "$path": "Packages"
+      }
+    },
+
+    "ServerScriptService": {
+      "$path": "src/Server",
+
+      "Packages":{
+        "$path": "ServerPackages"
+      }
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "$path": "src/Client/Player"
+      },
+      "StarterCharacterScripts":{
+        "$path": "src/Client/Character"
+      }
+    }
+  }
+}
