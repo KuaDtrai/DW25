@@ -1,6 +1,7 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CONSTANTS = require(ReplicatedStorage.Shared.Libraries.CONSTANTS)
+local Server = require(ReplicatedStorage.Shared.Network.Server)
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
@@ -21,6 +22,14 @@ function init:_Setup()
 	end
 end
 
-function init:_Start() end
+function init:_Start()
+	Server.MatchMaking.SetCallback(function(Player, Value)
+		warn("Matchmaking", Player)
+	end)
+
+	Server.TeleportToCampaign.SetCallback(function(Player)
+		warn("TeleportToCampaign", Player)
+	end)
+end
 
 return init

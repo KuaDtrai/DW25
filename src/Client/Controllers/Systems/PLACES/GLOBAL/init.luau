@@ -3,10 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
-local Client = ReplicatedStorage.Shared.Network.Client
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
+local Client = require(ReplicatedStorage.Shared.Network.Client)
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
@@ -32,14 +29,11 @@ function init:_Start()
 			end
 			-- Mouse 1 Click
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				-- Send signal to PlayerManager
-				Client.LeftClicked.Fire()
-				-- Pressed V button
-			elseif input.KeyCode == Enum.KeyCode.F then
-				-- Send signal to PlayerManager
-				Client.Block.Fire(true)
+				Client.Attack.Fire()
+			elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+				Client.Block.Fire()
 			elseif input.KeyCode == Enum.KeyCode.Q then
-				Client.AltToggle.Fire()
+				Client.Dash.Fire()
 			elseif input.KeyCode == Enum.KeyCode.LeftShift then
 				Client.ShiftToggle.Fire(true)
 			end
@@ -50,13 +44,8 @@ function init:_Start()
 				return
 			end
 
-			if input.KeyCode == Enum.KeyCode.F then
-				-- Send signal to PlayerManager
+			if input.KeyCode == Enum.UserInputType.MouseButton2 then
 				Client.Block.Fire(false)
-			-- elseif input.KeyCode == Enum.KeyCode.Q then
-			-- 	Client.AltToggle.Fire(false)
-			elseif input.KeyCode == Enum.KeyCode.LeftShift then
-				Client.ShiftToggle.Fire(false)
 			end
 		end)
 	end)

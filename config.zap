@@ -5,6 +5,8 @@ opt write_checks = true
 opt yield_type = "promise"
 opt async_lib = "require(game:GetService('ReplicatedStorage').Packages.Promise)"
 
+
+----- Teleport -----
 event MatchMaking = {
     from: Client,
     type: Reliable,
@@ -12,44 +14,39 @@ event MatchMaking = {
     data: boolean,
 }
 
-funct SaveCharacter = {
-    call: Async,
-    args: (
-        Strength: u8,
-        Dexterity: u8,
-        Constitution: u8,
-        Athletics: u8,
-        Equipment: string,
-    ),
-    rets: enum { Success, Fail },
+event TeleportToCampaign = {
+    from: Client,
+    type: Reliable,
+    call: SingleAsync,
+    data: (
+        Hero: string,
+        Campaign: string,
+        )
+    
 }
 
-event ShiftToggle = {
+----- Player Control -----
+event Dash = {
+    from: Client,
+    type: Reliable,
+    call: SingleAsync,
+}
+
+event Attack = {
+    from: Client,
+    type: Reliable,
+    call: SingleAsync,
+}
+
+event Skill = {
+    from: Client,
+    type: Reliable,
+	call: SingleAsync,
+}
+
+event Block = {
     from: Client,
     type: Reliable,
     call: SingleAsync,
     data: boolean,
-}
-
-event AltToggle = {
-    from: Client,
-    type: Reliable,
-    call: SingleAsync,
-}
-
-event LeftClicked = {
-    from: Client,
-    type: Reliable,
-    call: SingleAsync,
-}
-
-event UnitCommand = {
-    from: Client,
-    type: Reliable,
-    call: SingleAsync,
-    data: map{
-        [u8]: struct {
-            vec2: Vector3,
-        }
-    }
 }
