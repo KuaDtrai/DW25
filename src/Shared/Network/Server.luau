@@ -125,6 +125,9 @@ if not RunService:IsRunning() then
 		Skill = table.freeze({
 			SetCallback = noop
 		}),
+		Player_Action = table.freeze({
+			SetCallback = noop
+		}),
 		MatchMaking = table.freeze({
 			SetCallback = noop
 		}),
@@ -191,7 +194,7 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local reliable_events = table.create(6)
+local reliable_events = table.create(7)
 reliable.OnServerEvent:Connect(function(player, buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -202,41 +205,55 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 		local id = buffer.readu8(buff, read(1))
 		if id == 1 then
 			local value, value2
-			local len_1 = buffer.readu16(incoming_buff, read(2))
-			value = buffer.readstring(incoming_buff, read(len_1), len_1)
-			local len_2 = buffer.readu16(incoming_buff, read(2))
-			value2 = buffer.readstring(incoming_buff, read(len_2), len_2)
+			value = buffer.readu8(incoming_buff, read(1))
+			value2 = buffer.readu8(incoming_buff, read(1))
 			if reliable_events[1] then
 				task.spawn(reliable_events[1], player, value, value2)
 			end
-		elseif id == 4 then
+		elseif id == 5 then
 			local value
-			if reliable_events[4] then
-				task.spawn(reliable_events[4], player, value)
+			if reliable_events[5] then
+				task.spawn(reliable_events[5], player, value)
+			end
+		elseif id == 2 then
+			local value, value2
+			local bool_1 = buffer.readu8(incoming_buff, read(1))
+			if bit32.btest(bool_1, 0b0000000000000001) then
+				value = "ATTACK"
+			elseif bit32.btest(bool_1, 0b0000000000000010) then
+				value = "DASH"
+			elseif bit32.btest(bool_1, 0b0000000000000100) then
+				value = "SKILL"
+			elseif bit32.btest(bool_1, 0b0000000000001000) then
+				value = "BLOCK"
+			end
+			value2 = bit32.btest(bool_1, 0b0000000000010000)
+			if reliable_events[2] then
+				task.spawn(reliable_events[2], player, value, value2)
 			end
 		elseif id == 0 then
 			local value
-			local bool_1 = buffer.readu8(incoming_buff, read(1))
-			value = bit32.btest(bool_1, 0b0000000000000001)
-			if reliable_events[0] then
-				task.spawn(reliable_events[0], player, value)
-			end
-		elseif id == 2 then
-			local value
-			if reliable_events[2] then
-				task.spawn(reliable_events[2], player, value)
-			end
-		elseif id == 5 then
-			local value
 			local bool_2 = buffer.readu8(incoming_buff, read(1))
 			value = bit32.btest(bool_2, 0b0000000000000001)
-			if reliable_events[5] then
-				task.spawn(reliable_events[5], player, value)
+			if reliable_events[0] then
+				task.spawn(reliable_events[0], player, value)
 			end
 		elseif id == 3 then
 			local value
 			if reliable_events[3] then
 				task.spawn(reliable_events[3], player, value)
+			end
+		elseif id == 6 then
+			local value
+			local bool_3 = buffer.readu8(incoming_buff, read(1))
+			value = bit32.btest(bool_3, 0b0000000000000001)
+			if reliable_events[6] then
+				task.spawn(reliable_events[6], player, value)
+			end
+		elseif id == 4 then
+			local value
+			if reliable_events[4] then
+				task.spawn(reliable_events[4], player, value)
 			end
 		else
 			error("Unknown event id")
@@ -249,7 +266,7 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	TeleportToCampaign = {
-		SetCallback = function(Callback: (Player: Player, Hero: (string), Campaign: (string)) -> ()): () -> ()
+		SetCallback = function(Callback: (Player: Player, Hero: (number), Campaign: (number)) -> ()): () -> ()
 			reliable_events[1] = Callback
 			return function()
 				reliable_events[1] = nil
@@ -258,9 +275,17 @@ local returns = {
 	},
 	Skill = {
 		SetCallback = function(Callback: (Player: Player) -> ()): () -> ()
-			reliable_events[4] = Callback
+			reliable_events[5] = Callback
 			return function()
-				reliable_events[4] = nil
+				reliable_events[5] = nil
+			end
+		end,
+	},
+	Player_Action = {
+		SetCallback = function(Callback: (Player: Player, Action: ("ATTACK" | "DASH" | "SKILL" | "BLOCK"), State: (boolean)) -> ()): () -> ()
+			reliable_events[2] = Callback
+			return function()
+				reliable_events[2] = nil
 			end
 		end,
 	},
@@ -274,25 +299,25 @@ local returns = {
 	},
 	Dash = {
 		SetCallback = function(Callback: (Player: Player) -> ()): () -> ()
-			reliable_events[2] = Callback
+			reliable_events[3] = Callback
 			return function()
-				reliable_events[2] = nil
+				reliable_events[3] = nil
 			end
 		end,
 	},
 	Block = {
 		SetCallback = function(Callback: (Player: Player, Value: (boolean)) -> ()): () -> ()
-			reliable_events[5] = Callback
+			reliable_events[6] = Callback
 			return function()
-				reliable_events[5] = nil
+				reliable_events[6] = nil
 			end
 		end,
 	},
 	Attack = {
 		SetCallback = function(Callback: (Player: Player) -> ()): () -> ()
-			reliable_events[3] = Callback
+			reliable_events[4] = Callback
 			return function()
-				reliable_events[3] = nil
+				reliable_events[4] = nil
 			end
 		end,
 	},

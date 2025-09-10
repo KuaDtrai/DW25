@@ -1,9 +1,30 @@
+--!strict
 local is_random_spawn = game.Workspace:GetAttribute("IS_RANDOM_SPAWN")
-return {
+
+local Constants = {
 	LOBBY_ID = 119334285068261,
 	MAP1_ID = 80052819822430,
 	MAP2_ID = 98402206815955,
 	MAP3_ID = 103160072410402,
+
+	ANIMATION = {
+		ATTACK = 102407853326594,
+		BLOCK = 94477524681114,
+		DASH = 116692188781498,
+		SKILL1 = "Skill",
+		SKILL2 = "Skill",
+		SKILL3 = "Skill",
+		WALK = "Walk",
+		IDLE = "Idle",
+		DEAD = "Dead",
+		DEATH = "Death",
+		DIE = "Die",
+		DINO = "Dino",
+		FLY = "Fly",
+		LAND = "Land",
+		JUMP = "Jump",
+		RUN = "Run",
+	},
 
 	ARENDA_ID = 103160072410402,
 
@@ -28,4 +49,16 @@ return {
 	},
 
 	WILD_DINOSAUR_TAG = "WILD_DINO",
+
+	getAnimation = function(self, animationName)
+		local animId = rawget(self.ANIMATION, animationName)
+		if type(animId) == "number" then
+			return tostring("rbxassetid://" .. animId)
+		elseif type(animId) == "string" then
+			return animId
+		end
+		return ""
+	end,
 }
+
+return Constants

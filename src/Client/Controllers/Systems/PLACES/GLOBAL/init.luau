@@ -29,23 +29,36 @@ function init:_Start()
 			end
 			-- Mouse 1 Click
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				Client.Attack.Fire()
+				-- Tấn công --
+				Client.Player_Action.Fire("ATTACK", true)
 			elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-				Client.Block.Fire()
+				-- Thủ --
+				Client.Player_Action.Fire("BLOCK", true)
 			elseif input.KeyCode == Enum.KeyCode.Q then
-				Client.Dash.Fire()
-			elseif input.KeyCode == Enum.KeyCode.LeftShift then
-				Client.ShiftToggle.Fire(true)
+				-- Lướt --
+				Client.Player_Action.Fire("DASH", true)
+			elseif input.KeyCode == Enum.KeyCode.E then
+				-- Chiêu --
+				Client.Player_Action.Fire("SKILL", true)
+			elseif input.KeyCode == Enum.KeyCode.M then
+				-- Bản đồ
+				warn("Map")
+			elseif input.KeyCode == Enum.KeyCode.B then
+				-- Túi đồ/Hành trang --
+				warn("Bag")
+			elseif input.KeyCode == Enum.KeyCode.P then
+				-- Tạm dừng/Tùy chọn
+				warn("Pause/Option")
 			end
 		end)
-		-- On Release V button
+		-- On Release Right Mouse Button
 		UserInputService.InputEnded:Connect(function(input: InputObject, gameProcessedEvent: boolean)
 			if gameProcessedEvent then
 				return
 			end
 
-			if input.KeyCode == Enum.UserInputType.MouseButton2 then
-				Client.Block.Fire(false)
+			if input.UserInputType == Enum.UserInputType.MouseButton2 then
+				Client.Player_Action.Fire("BLOCK", false)
 			end
 		end)
 	end)

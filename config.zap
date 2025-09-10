@@ -19,13 +19,23 @@ event TeleportToCampaign = {
     type: Reliable,
     call: SingleAsync,
     data: (
-        Hero: string,
-        Campaign: string,
+        Hero: u8,
+        Campaign: u8,
         )
     
 }
 
 ----- Player Control -----
+event Player_Action = {
+    from: Client,
+    type: Reliable,
+    call: SingleAsync,
+    data: (
+        Action: enum{ATTACK, DASH, SKILL, BLOCK},
+        State: boolean,
+    ),
+}
+
 event Dash = {
     from: Client,
     type: Reliable,
