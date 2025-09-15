@@ -17,28 +17,29 @@ export type System = {
 local init = {
 	_Extensions = {},
 } :: System
-local Dash = Dash.new()
-local Attack = Attack.new()
-local Block = Block.new()
-local Skill = Skill.new()
 function init:_Setup()
-	-- self.Dash = Dash.new()
-	-- self.Attack = Attack.new()
-	-- self.Block = Block.new()
-	-- self.Skill = Skill.new()
+	warn(1)
+	self.Dash = Dash.new()
+	warn(2)
+	self.Attack = Attack.new()
+	warn(3)
+	self.Block = Block.new()
+	warn(4)
+	self.Skill = Skill.new()
+	warn(5)
 end
 
 function init:_Start()
 	Server.Player_Action.SetCallback(function(Player, Action, State)
 		warn("Player_Action", Player, Action, State)
 		if Action == "ATTACK" then
-			Attack:onAttack(Player, State)
+			self.Attack:onAttack(Player, State)
 		elseif Action == "BLOCK" then
-			Block:onBlock(Player, State)
+			self.Block:onBlock(Player, State)
 		elseif Action == "DASH" then
-			Dash:onDash(Player)
+			self.Dash:onDash(Player)
 		elseif Action == "SKILL" then
-			Skill:onSkill(Player)
+			self.Skill:onSkill(Player)
 		end
 	end)
 end
