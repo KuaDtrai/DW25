@@ -1,6 +1,6 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
+local HitDetection = require(script.HitDetection)
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
 export type System = {
@@ -13,7 +13,10 @@ local init = {
 	_Extensions = {},
 } :: System
 
-function init:_Setup() end
+function init:_Setup()
+	self.HitDetection = HitDetection.new()
+	warn(self)
+end
 
 function init:_Start() end
 
