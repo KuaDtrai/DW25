@@ -19,6 +19,8 @@ local init = {
 
 function init:_Setup()
 	-- self.PlayerState = PlayerState.new()
+	self.cooldown = false
+	self.cooldownTime = 0.5
 end
 
 function init:_Start()
@@ -30,7 +32,14 @@ function init:_Start()
 			-- Mouse 1 Click
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				-- Tấn công --
-				Client.Player_Action.Fire("ATTACK", true)
+				if not self.cooldown then
+					self.cooldown = true
+					Client.Player_Action.Fire("ATTACK", true)
+					task.delay(self.cooldownTime, function()
+						self.cooldown = false
+					end)
+				end
+				-- Client.Player_Action.Fire("ATTACK", true)
 			elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
 				-- Thủ --
 				Client.Player_Action.Fire("BLOCK", true)

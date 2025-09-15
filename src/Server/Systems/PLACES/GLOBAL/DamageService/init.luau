@@ -1,5 +1,7 @@
 --!strict
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
@@ -15,6 +17,12 @@ local init = {
 
 function init:_Setup() end
 
-function init:_Start() end
+function init:_Start()
+	Players.PlayerAdded:Connect(function(player)
+		if player then
+			CollectionService:AddTag(player, "Block")
+		end
+	end)
+end
 
 return init
