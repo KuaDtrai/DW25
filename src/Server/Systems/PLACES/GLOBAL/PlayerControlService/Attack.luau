@@ -28,22 +28,18 @@ function Class.new(): Attack
 	}
 
 	self.HITBOX_TIME = {
-		0.2,
 		0.4,
-		0.6,
+		0.8,
+		1,
+	}
+	self.ComboAnims = {
+		CONSTANTS:getAnimation("COMBO1"),
+		CONSTANTS:getAnimation("COMBO2"),
+		CONSTANTS:getAnimation("COMBO3"),
 	}
 
-	-- 🔹 Combo animations (each has a hitbox timing)
-	-- self.ComboAnims = {
-	-- 	{ Key = "ATTACK_1", HitboxDelay = 0.15 },
-	-- 	{ Key = "ATTACK_2", HitboxDelay = 0.20 },
-	-- 	{ Key = "ATTACK_3", HitboxDelay = 0.25 },
-	-- 	{ Key = "ATTACK_4", HitboxDelay = 0.18 }, -- finisher
-	-- }
-	-- HitboxDelay is the length of an animation
-
 	self.ComboIndex = 1
-	self.ComboResetTime = 1.2
+	self.ComboResetTime = 2
 	self.LastAttackTime = 0
 	warn(self)
 	return self
@@ -52,65 +48,63 @@ end
 function Class:onAttack(Player)
 	local character = Player.Character
 	if not character then
-		warn(0)
+		warn("No character found for player:", Player.Name)
 		return
 	end
 
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then
-		warn(0)
-		return
-	end
 	local hrp = character:FindFirstChild("HumanoidRootPart")
-	if not hrp then
-		warn(0)
+	if not humanoid or not hrp then
+		warn("Humanoid or HRP missing for character:", character.Name)
 		return
 	end
-	-- Unitl have anim will uncmt this line
-	-- 🔹 Reset combo if too slow
+
+	-- Reset combo if too slow
 	local now = tick()
 	if now - self.LastAttackTime > self.ComboResetTime then
 		self.ComboIndex = 1
 	end
 	self.LastAttackTime = now
 
-	local comboData = self.Combo[self.ComboIndex]
-	local comboTime = self.HITBOX_TIME[self.ComboIndex]
+	-- Get combo data
+	local hitboxModel = self.Combo[self.ComboIndex]
+	local spawnDelay = self.HITBOX_TIME[self.ComboIndex]
+	local animId = self.ComboAnims[self.ComboIndex]
 
-	-- -- 🔹 Get current combo data
-	-- local comboData = self.ComboAnims[self.ComboIndex]
-	-- local animationId = CONSTANTS:getAnimation(comboData.Key)
+	-- Play animation
+	if animId and animId ~= "" then
+		local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+		animator.Parent = humanoid
 
-	-- if animationId ~= "" then
-	-- 	local animator = humanoid:FindFirstChildOfClass("Animator")
-	-- 	if not animator then
-	-- 		animator = Instance.new("Animator")
-	-- 		animator.Parent = humanoid
-	-- 	end
+		local anim = Instance.new("Animation")
+		anim.AnimationId = animId
+		Debris:AddItem(anim, 5) -- Clean up animation object
 
-	-- 	local anim = Instance.new("Animation")
-	-- 	anim.AnimationId = animationId
+		local track = animator:LoadAnimation(anim)
+		if track then
+			-- Stop other animations
+			for _, playingTrack in ipairs(animator:GetPlayingAnimationTracks()) do
+				playingTrack:Stop()
+			end
+			track.Priority = Enum.AnimationPriority.Action
+			track:Play()
+			print("Playing animation:", animId)
+		else
+			warn("Failed to load animation with ID:", animId)
+		end
 
-	-- 	local track = animator:LoadAnimation(anim)
-	-- 	track.Priority = Enum.AnimationPriority.Action
-	-- 	track:Play()
+		-- Spawn hitbox during active frames
+		task.delay(spawnDelay, function()
+			if humanoid.Health > 0 then
+				Class.spawnArcHitbox(character, hitboxModel, spawnDelay)
+			end
+		end)
+	else
+		warn("Invalid or empty AnimationId for ComboIndex:", self.ComboIndex)
+	end
 
-	-- Spawn hitbox during active frames
-
-	-- task.delay(comboData.HitboxDelay, function()
-	-- 	if humanoid.Health > 0 then
-	-- 		local rightHand = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
-	-- 		if rightHand then
-	-- 			self:spawnHitbox(rightHand, character)
-	-- 		end
-	-- 	end
-	-- end)
-
-	Class.spawnArcHitbox(character, comboData, comboTime)
-
-	-- 🔹 Advance combo
+	-- Advance combo
 	if self.ComboIndex >= #self.Combo then
-		-- reached finisher, reset back to first
 		self.ComboIndex = 1
 	else
 		self.ComboIndex += 1
