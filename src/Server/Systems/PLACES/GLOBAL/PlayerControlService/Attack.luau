@@ -28,9 +28,9 @@ function Class.new(): Attack
 	}
 
 	self.HITBOX_TIME = {
-		0.4,
-		0.8,
-		1,
+		0.2,
+		0.2,
+		0.3,
 	}
 	self.ComboAnims = {
 		CONSTANTS:getAnimation("COMBO1"),
@@ -39,7 +39,7 @@ function Class.new(): Attack
 	}
 
 	self.ComboIndex = 1
-	self.ComboResetTime = 2
+	self.ComboResetTime = 1
 	self.LastAttackTime = 0
 	warn(self)
 	return self
@@ -78,7 +78,7 @@ function Class:onAttack(Player)
 
 		local anim = Instance.new("Animation")
 		anim.AnimationId = animId
-		Debris:AddItem(anim, 5) -- Clean up animation object
+		Debris:AddItem(anim, 1.5) -- Clean up animation object
 
 		local track = animator:LoadAnimation(anim)
 		if track then
