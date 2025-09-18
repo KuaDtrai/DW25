@@ -19,8 +19,18 @@ local init = {
 
 function init:_Setup()
 	-- self.PlayerState = PlayerState.new()
+	self.ComboResetTime = 1
+	self.ComboResetTask = nil
 	self.cooldown = false
 	self.cooldownTime = 0.5
+	self.ComboCooldownTime = 1
+	self.comboCount = 0
+	self.SkillCooldown = false
+	self.SkillCooldownTime = {
+		2,
+		4,
+		6,
+	}
 end
 
 function init:_Start()
@@ -34,9 +44,31 @@ function init:_Start()
 				-- Tấn công --
 				if not self.cooldown then
 					self.cooldown = true
-					Client.Player_Action.Fire("ATTACK", true)
-					task.delay(self.cooldownTime, function()
-						self.cooldown = false
+
+					-- Cancel old reset timer
+					if self.comboResetTask then
+						task.cancel(self.comboResetTask)
+						self.comboResetTask = nil
+					end
+
+					-- Increment combo
+					if self.comboCount <= 2 then
+						self.comboCount += 1
+						-- Normal attack cooldown
+						Client.Player_Action.Fire("ATTACK", true)
+						task.delay(self.cooldownTime, function()
+							self.cooldown = false
+						end)
+					else
+						-- After 3rd hit → Combo cooldown
+						task.delay(self.ComboCooldownTime, function()
+							self.comboCount = 0
+							self.cooldown = false
+						end)
+					end
+					-- Start/reset combo timeout timer
+					self.comboResetTask = task.delay(self.ComboResetTime, function()
+						self.comboCount = 0
 					end)
 				end
 				-- Client.Player_Action.Fire("ATTACK", true)
@@ -48,6 +80,20 @@ function init:_Start()
 				Client.Player_Action.Fire("DASH", true)
 			elseif input.KeyCode == Enum.KeyCode.E then
 				-- Chiêu --
+				if self.comboCount == 1 then
+					-- if not self.SkillCooldown then
+					-- 	self.SkillCooldown = true
+					-- 	warn("Skill 1")
+					-- 	task.delay(self.SkillCooldownTime[1], function()
+					-- 		self.cooldown = false
+					-- 	end)
+					-- end
+					warn("Skill 1")
+				elseif self.comboCount == 2 then
+					warn("Skill 2")
+				elseif self.comboCount == 3 then
+					warn("Skill 3")
+				end
 				Client.Player_Action.Fire("SKILL", true)
 			elseif input.KeyCode == Enum.KeyCode.M then
 				-- Bản đồ

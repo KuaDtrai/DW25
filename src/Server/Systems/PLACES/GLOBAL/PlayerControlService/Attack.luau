@@ -30,7 +30,7 @@ function Class.new(): Attack
 	self.HITBOX_TIME = {
 		0.2,
 		0.2,
-		0.3,
+		0.2,
 	}
 	self.ComboAnims = {
 		CONSTANTS:getAnimation("COMBO1"),
