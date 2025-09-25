@@ -3,8 +3,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
-local Client = require(ReplicatedStorage.Shared.Network.Client)
 
+local UI = require(script.UI)
+local Client = require(ReplicatedStorage.Shared.Network.Client)
 local Openday = require(ReplicatedStorage.Shared.Openday)
 local GUI = require(script.GUI)
 
@@ -30,6 +31,13 @@ function init:_Setup()
 	self.ComboCooldownTime = 1
 	self.comboCount = 0
 	self.SkillCooldown = false
+	self.SkillCooldownTime = {
+		2,
+		4,
+		6,
+	}
+
+	self.UI = UI.new()
 end
 
 function init:_Start()

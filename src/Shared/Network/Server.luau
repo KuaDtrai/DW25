@@ -204,11 +204,21 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
 		if id == 1 then
-			local value, value2
-			value = buffer.readu8(incoming_buff, read(1))
-			value2 = buffer.readu8(incoming_buff, read(1))
+			local value
+			local bool_1 = buffer.readu8(incoming_buff, read(1))
+			if bit32.btest(bool_1, 0b0000000000000001) then
+				value = "LOBBY"
+			elseif bit32.btest(bool_1, 0b0000000000000010) then
+				value = "LACDUONG"
+			elseif bit32.btest(bool_1, 0b0000000000000100) then
+				value = "MAP1"
+			elseif bit32.btest(bool_1, 0b0000000000001000) then
+				value = "MAP2"
+			elseif bit32.btest(bool_1, 0b0000000000010000) then
+				value = "MAP3"
+			end
 			if reliable_events[1] then
-				task.spawn(reliable_events[1], player, value, value2)
+				task.spawn(reliable_events[1], player, value)
 			end
 		elseif id == 5 then
 			local value
@@ -217,24 +227,24 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 			end
 		elseif id == 2 then
 			local value, value2
-			local bool_1 = buffer.readu8(incoming_buff, read(1))
-			if bit32.btest(bool_1, 0b0000000000000001) then
+			local bool_2 = buffer.readu8(incoming_buff, read(1))
+			if bit32.btest(bool_2, 0b0000000000000001) then
 				value = "ATTACK"
-			elseif bit32.btest(bool_1, 0b0000000000000010) then
+			elseif bit32.btest(bool_2, 0b0000000000000010) then
 				value = "DASH"
-			elseif bit32.btest(bool_1, 0b0000000000000100) then
+			elseif bit32.btest(bool_2, 0b0000000000000100) then
 				value = "SKILL"
-			elseif bit32.btest(bool_1, 0b0000000000001000) then
+			elseif bit32.btest(bool_2, 0b0000000000001000) then
 				value = "BLOCK"
 			end
-			value2 = bit32.btest(bool_1, 0b0000000000010000)
+			value2 = bit32.btest(bool_2, 0b0000000000010000)
 			if reliable_events[2] then
 				task.spawn(reliable_events[2], player, value, value2)
 			end
 		elseif id == 0 then
 			local value
-			local bool_2 = buffer.readu8(incoming_buff, read(1))
-			value = bit32.btest(bool_2, 0b0000000000000001)
+			local bool_3 = buffer.readu8(incoming_buff, read(1))
+			value = bit32.btest(bool_3, 0b0000000000000001)
 			if reliable_events[0] then
 				task.spawn(reliable_events[0], player, value)
 			end
@@ -245,8 +255,8 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 			end
 		elseif id == 6 then
 			local value
-			local bool_3 = buffer.readu8(incoming_buff, read(1))
-			value = bit32.btest(bool_3, 0b0000000000000001)
+			local bool_4 = buffer.readu8(incoming_buff, read(1))
+			value = bit32.btest(bool_4, 0b0000000000000001)
 			if reliable_events[6] then
 				task.spawn(reliable_events[6], player, value)
 			end
@@ -266,7 +276,7 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	TeleportToCampaign = {
-		SetCallback = function(Callback: (Player: Player, Hero: (number), Campaign: (number)) -> ()): () -> ()
+		SetCallback = function(Callback: (Player: Player, Value: ("LOBBY" | "LACDUONG" | "MAP1" | "MAP2" | "MAP3")) -> ()): () -> ()
 			reliable_events[1] = Callback
 			return function()
 				reliable_events[1] = nil

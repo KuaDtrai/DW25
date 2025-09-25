@@ -22,14 +22,6 @@ function init:_Setup()
 	end
 end
 
-function init:_Start()
-	Server.MatchMaking.SetCallback(function(Player, Value)
-		warn("Matchmaking", Player)
-	end)
-
-	Server.TeleportToCampaign.SetCallback(function(Player)
-		warn("TeleportToCampaign", Player)
-	end)
-end
+function init:_Start() end
 
 return init
