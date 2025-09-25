@@ -173,13 +173,25 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	TeleportToCampaign = {
-		Fire = function(Hero: (number), Campaign: (number))
+		Fire = function(Value: ("LOBBY" | "LACDUONG" | "MAP1" | "MAP2" | "MAP3"))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Hero)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Campaign)
+			local bool_1 = 0
+			local bool_1_pos_1 = alloc(1)
+			if Value == "LOBBY" then
+				bool_1 = bit32.bor(bool_1, 0b0000000000000001)
+			elseif Value == "LACDUONG" then
+				bool_1 = bit32.bor(bool_1, 0b0000000000000010)
+			elseif Value == "MAP1" then
+				bool_1 = bit32.bor(bool_1, 0b0000000000000100)
+			elseif Value == "MAP2" then
+				bool_1 = bit32.bor(bool_1, 0b0000000000001000)
+			elseif Value == "MAP3" then
+				bool_1 = bit32.bor(bool_1, 0b0000000000010000)
+			else
+				error("Invalid enumerator")
+			end
+			buffer.writeu8(outgoing_buff, bool_1_pos_1, bool_1)
 		end,
 	},
 	Skill = {
@@ -192,35 +204,35 @@ local returns = {
 		Fire = function(Action: ("ATTACK" | "DASH" | "SKILL" | "BLOCK"), State: (boolean))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
-			local bool_1 = 0
-			local bool_1_pos_1 = alloc(1)
+			local bool_2 = 0
+			local bool_2_pos_1 = alloc(1)
 			if Action == "ATTACK" then
-				bool_1 = bit32.bor(bool_1, 0b0000000000000001)
+				bool_2 = bit32.bor(bool_2, 0b0000000000000001)
 			elseif Action == "DASH" then
-				bool_1 = bit32.bor(bool_1, 0b0000000000000010)
+				bool_2 = bit32.bor(bool_2, 0b0000000000000010)
 			elseif Action == "SKILL" then
-				bool_1 = bit32.bor(bool_1, 0b0000000000000100)
+				bool_2 = bit32.bor(bool_2, 0b0000000000000100)
 			elseif Action == "BLOCK" then
-				bool_1 = bit32.bor(bool_1, 0b0000000000001000)
+				bool_2 = bit32.bor(bool_2, 0b0000000000001000)
 			else
 				error("Invalid enumerator")
 			end
 			if State then
-				bool_1 = bit32.bor(bool_1, 0b0000000000010000)
+				bool_2 = bit32.bor(bool_2, 0b0000000000010000)
 			end
-			buffer.writeu8(outgoing_buff, bool_1_pos_1, bool_1)
+			buffer.writeu8(outgoing_buff, bool_2_pos_1, bool_2)
 		end,
 	},
 	MatchMaking = {
 		Fire = function(Value: (boolean))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_2 = 0
-			local bool_2_pos_1 = alloc(1)
+			local bool_3 = 0
+			local bool_3_pos_1 = alloc(1)
 			if Value then
-				bool_2 = bit32.bor(bool_2, 0b0000000000000001)
+				bool_3 = bit32.bor(bool_3, 0b0000000000000001)
 			end
-			buffer.writeu8(outgoing_buff, bool_2_pos_1, bool_2)
+			buffer.writeu8(outgoing_buff, bool_3_pos_1, bool_3)
 		end,
 	},
 	Dash = {
@@ -233,12 +245,12 @@ local returns = {
 		Fire = function(Value: (boolean))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 6)
-			local bool_3 = 0
-			local bool_3_pos_1 = alloc(1)
+			local bool_4 = 0
+			local bool_4_pos_1 = alloc(1)
 			if Value then
-				bool_3 = bit32.bor(bool_3, 0b0000000000000001)
+				bool_4 = bit32.bor(bool_4, 0b0000000000000001)
 			end
-			buffer.writeu8(outgoing_buff, bool_3_pos_1, bool_3)
+			buffer.writeu8(outgoing_buff, bool_4_pos_1, bool_4)
 		end,
 	},
 	Attack = {

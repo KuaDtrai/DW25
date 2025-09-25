@@ -3,6 +3,8 @@ local is_random_spawn = game.Workspace:GetAttribute("IS_RANDOM_SPAWN")
 
 local Constants = {
 	LOBBY_ID = 119334285068261,
+	LACDUONG_ID = 106860163281620,
+	ARENA_ID = 122596162108564,
 	MAP1_ID = 80052819822430,
 	MAP2_ID = 98402206815955,
 	MAP3_ID = 103160072410402,
@@ -22,7 +24,6 @@ local Constants = {
 		DEAD = "Dead",
 		DEATH = "Death",
 		DIE = "Die",
-		DINO = "Dino",
 		FLY = "Fly",
 		LAND = "Land",
 		JUMP = "Jump",
@@ -52,6 +53,16 @@ local Constants = {
 	},
 
 	WILD_DINOSAUR_TAG = "WILD_DINO",
+
+	getPlaceId = function(self, placeName)
+		local placeId = rawget(self.PLACE_ID, placeName)
+		if type(placeId) == "number" then
+			return placeId
+		elseif type(placeId) == "string" then
+			return tonumber(placeId)
+		end
+		return 0
+	end,
 
 	getAnimation = function(self, animationName)
 		local animId = rawget(self.ANIMATION, animationName)

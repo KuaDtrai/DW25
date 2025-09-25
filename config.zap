@@ -18,11 +18,7 @@ event TeleportToCampaign = {
     from: Client,
     type: Reliable,
     call: SingleAsync,
-    data: (
-        Hero: u8,
-        Campaign: u8,
-        )
-    
+    data: enum{LOBBY, LACDUONG, MAP1, MAP2, MAP3},
 }
 
 ----- Player Control -----
