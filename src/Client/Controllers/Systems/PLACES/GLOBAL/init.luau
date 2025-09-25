@@ -6,6 +6,7 @@ local UserInputService = game:GetService("UserInputService")
 local Client = require(ReplicatedStorage.Shared.Network.Client)
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
+local GUI = require(script.GUI)
 
 export type System = {
 	_Extensions: { Openday.Extension },
@@ -19,6 +20,9 @@ local init = {
 
 function init:_Setup()
 	-- self.PlayerState = PlayerState.new()
+
+	self.GUI = GUI.new()
+
 	self.ComboResetTime = 1
 	self.ComboResetTask = nil
 	self.cooldown = false
@@ -26,11 +30,6 @@ function init:_Setup()
 	self.ComboCooldownTime = 1
 	self.comboCount = 0
 	self.SkillCooldown = false
-	self.SkillCooldownTime = {
-		2,
-		4,
-		6,
-	}
 end
 
 function init:_Start()
@@ -52,7 +51,7 @@ function init:_Start()
 					end
 
 					-- Increment combo
-					if self.comboCount <= 2 then
+					if self.comboCount <= 2 and self.SkillCooldown == false then
 						self.comboCount += 1
 						-- Normal attack cooldown
 						Client.Player_Action.Fire("ATTACK", true)
@@ -63,6 +62,7 @@ function init:_Start()
 						-- After 3rd hit → Combo cooldown
 						task.delay(self.ComboCooldownTime, function()
 							self.comboCount = 0
+							self.SkillCooldown = false
 							self.cooldown = false
 						end)
 					end
@@ -81,20 +81,18 @@ function init:_Start()
 			elseif input.KeyCode == Enum.KeyCode.E then
 				-- Chiêu --
 				if self.comboCount == 1 then
-					-- if not self.SkillCooldown then
-					-- 	self.SkillCooldown = true
-					-- 	warn("Skill 1")
-					-- 	task.delay(self.SkillCooldownTime[1], function()
-					-- 		self.cooldown = false
-					-- 	end)
-					-- end
 					warn("Skill 1")
+					self.SkillCooldown = true
+					Client.Player_Action.Fire("SKILL", true)
 				elseif self.comboCount == 2 then
 					warn("Skill 2")
+					self.SkillCooldown = true
+					Client.Player_Action.Fire("SKILL", true)
 				elseif self.comboCount == 3 then
 					warn("Skill 3")
+					self.SkillCooldown = true
+					Client.Player_Action.Fire("SKILL", true)
 				end
-				Client.Player_Action.Fire("SKILL", true)
 			elseif input.KeyCode == Enum.KeyCode.M then
 				-- Bản đồ
 				warn("Map")

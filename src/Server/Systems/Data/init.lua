@@ -45,6 +45,7 @@ end
 local function Load(player: Player)
 	local profile = ProfileStore:LoadProfileAsync("UserId_" .. player.UserId)
 	player:SetAttribute("Joined", workspace:GetServerTimeNow())
+	player:SetAttribute("Combo", 0)
 
 	if profile ~= nil then
 		profile:AddUserId(player.UserId) -- GDPR compliance

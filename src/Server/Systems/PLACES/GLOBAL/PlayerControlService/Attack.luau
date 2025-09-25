@@ -1,5 +1,6 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local HitBoxFolder = ReplicatedStorage.Shared.Assets.HitBox :: Folder
 local Debris = game:GetService("Debris")
 
@@ -41,7 +42,6 @@ function Class.new(): Attack
 	self.ComboIndex = 1
 	self.ComboResetTime = 1
 	self.LastAttackTime = 0
-	warn(self)
 	return self
 end
 
@@ -102,6 +102,18 @@ function Class:onAttack(Player)
 	else
 		warn("Invalid or empty AnimationId for ComboIndex:", self.ComboIndex)
 	end
+
+	Player:SetAttribute("Combo", self.ComboIndex)
+
+	-- Schedule reset after ComboResetTime
+	local thisAttackTime = self.LastAttackTime
+	task.delay(self.ComboResetTime, function()
+		-- Only reset if no new attacks happened since
+		if self.LastAttackTime == thisAttackTime then
+			self.ComboIndex = 1
+			Player:SetAttribute("Combo", 0) -- reset to 0
+		end
+	end)
 
 	-- Advance combo
 	if self.ComboIndex >= #self.Combo then
