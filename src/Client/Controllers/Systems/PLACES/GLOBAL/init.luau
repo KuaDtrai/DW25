@@ -7,6 +7,7 @@ local Client = require(ReplicatedStorage.Shared.Network.Client)
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
 local GUI = require(script.GUI)
+local Minimap = require(script.Minimap)
 
 export type System = {
 	_Extensions: { Openday.Extension },
@@ -22,6 +23,7 @@ function init:_Setup()
 	-- self.PlayerState = PlayerState.new()
 
 	self.GUI = GUI.new()
+	self.Minimap = Minimap.new()
 
 	self.ComboResetTime = 1
 	self.ComboResetTask = nil
