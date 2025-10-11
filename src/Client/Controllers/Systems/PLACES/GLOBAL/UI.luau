@@ -16,7 +16,7 @@ function Class.new(): UI
 	local self: UI = setmetatable({} :: any, Class)
 
 	self.PlayerGui = Player:WaitForChild("PlayerGui")
-	self.ScreenGui = self.PlayerGui:WaitForChild("ScreenGui")
+	-- self.ScreenGui = self.PlayerGui:WaitForChild("ScreenGui")
 	self.LacDuongBTN = self.ScreenGui:WaitForChild("LacDuongThanh") :: TextButton
 	self.MAP1BTN = self.ScreenGui:WaitForChild("Map1") :: TextButton
 

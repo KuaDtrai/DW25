@@ -22,8 +22,9 @@ function Class.new(): Minimap
 	local hrp = Character:WaitForChild("HumanoidRootPart")
 
 	local playerGui = Player:WaitForChild("PlayerGui")
-	local minimapGui = playerGui:WaitForChild("Minimap") :: ScreenGui
-	local frame = minimapGui:WaitForChild("MapFrame") :: ViewportFrame
+	local mainUI = playerGui:WaitForChild("MainUI") :: ScreenGui
+	local mainframe = mainUI:WaitForChild("MainUI") :: Frame
+	local frame = mainframe:WaitForChild("MapFrame") :: ViewportFrame
 	local playerIcon = frame:WaitForChild("ImageLabel") :: ImageLabel
 
 	local camera = Instance.new("Camera")
