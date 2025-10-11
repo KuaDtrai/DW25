@@ -38,93 +38,95 @@ function init:_Setup()
 		4,
 		6,
 	}
-
 	self.UI = UI.new()
 end
 
 function init:_Start()
-	Player.CharacterAdded:Connect(function(character: Model)
-		UserInputService.InputBegan:Connect(function(input, gameProcessedEvent: boolean)
-			if gameProcessedEvent then
-				return
-			end
-			-- Mouse 1 Click
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				-- Tấn công --
-				if not self.cooldown then
-					self.cooldown = true
+	-- Player.CharacterAdded:Connect(function(character: Model)
+	-- 	warn(character)
+	UserInputService.InputBegan:Connect(function(input, gameProcessedEvent: boolean)
+		warn(1)
+		if gameProcessedEvent then
+			return
+		end
+		warn(input)
+		-- Mouse 1 Click
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			-- Tấn công --
+			if not self.cooldown then
+				self.cooldown = true
 
-					-- Cancel old reset timer
-					if self.comboResetTask then
-						task.cancel(self.comboResetTask)
-						self.comboResetTask = nil
-					end
+				-- Cancel old reset timer
+				if self.comboResetTask then
+					task.cancel(self.comboResetTask)
+					self.comboResetTask = nil
+				end
 
-					-- Increment combo
-					if self.comboCount <= 2 and self.SkillCooldown == false then
-						self.comboCount += 1
-						-- Normal attack cooldown
-						Client.Player_Action.Fire("ATTACK", true)
-						task.delay(self.cooldownTime, function()
-							self.cooldown = false
-						end)
-					else
-						-- After 3rd hit → Combo cooldown
-						task.delay(self.ComboCooldownTime, function()
-							self.comboCount = 0
-							self.SkillCooldown = false
-							self.cooldown = false
-						end)
-					end
-					-- Start/reset combo timeout timer
-					self.comboResetTask = task.delay(self.ComboResetTime, function()
+				-- Increment combo
+				if self.comboCount <= 2 and self.SkillCooldown == false then
+					self.comboCount += 1
+					-- Normal attack cooldown
+					Client.Player_Action.Fire("ATTACK", true)
+					task.delay(self.cooldownTime, function()
+						self.cooldown = false
+					end)
+				else
+					-- After 3rd hit → Combo cooldown
+					task.delay(self.ComboCooldownTime, function()
 						self.comboCount = 0
+						self.SkillCooldown = false
+						self.cooldown = false
 					end)
 				end
-				-- Client.Player_Action.Fire("ATTACK", true)
-			elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-				-- Thủ --
-				Client.Player_Action.Fire("BLOCK", true)
-			elseif input.KeyCode == Enum.KeyCode.Q then
-				-- Lướt --
-				Client.Player_Action.Fire("DASH", true)
-			elseif input.KeyCode == Enum.KeyCode.E then
-				-- Chiêu --
-				if self.comboCount == 1 then
-					warn("Skill 1")
-					self.SkillCooldown = true
-					Client.Player_Action.Fire("SKILL", true)
-				elseif self.comboCount == 2 then
-					warn("Skill 2")
-					self.SkillCooldown = true
-					Client.Player_Action.Fire("SKILL", true)
-				elseif self.comboCount == 3 then
-					warn("Skill 3")
-					self.SkillCooldown = true
-					Client.Player_Action.Fire("SKILL", true)
-				end
-			elseif input.KeyCode == Enum.KeyCode.M then
-				-- Bản đồ
-				warn("Map")
-			elseif input.KeyCode == Enum.KeyCode.B then
-				-- Túi đồ/Hành trang --
-				warn("Bag")
-			elseif input.KeyCode == Enum.KeyCode.P then
-				-- Tạm dừng/Tùy chọn
-				warn("Pause/Option")
+				-- Start/reset combo timeout timer
+				self.comboResetTask = task.delay(self.ComboResetTime, function()
+					self.comboCount = 0
+				end)
 			end
-		end)
-		-- On Release Right Mouse Button
-		UserInputService.InputEnded:Connect(function(input: InputObject, gameProcessedEvent: boolean)
-			if gameProcessedEvent then
-				return
+			-- Client.Player_Action.Fire("ATTACK", true)
+		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+			-- Thủ --
+			Client.Player_Action.Fire("BLOCK", true)
+		elseif input.KeyCode == Enum.KeyCode.Q then
+			-- Lướt --
+			Client.Player_Action.Fire("DASH", true)
+		elseif input.KeyCode == Enum.KeyCode.E then
+			-- Chiêu --
+			if self.comboCount == 1 then
+				warn("Skill 1")
+				self.SkillCooldown = true
+				Client.Player_Action.Fire("SKILL", true)
+			elseif self.comboCount == 2 then
+				warn("Skill 2")
+				self.SkillCooldown = true
+				Client.Player_Action.Fire("SKILL", true)
+			elseif self.comboCount == 3 then
+				warn("Skill 3")
+				self.SkillCooldown = true
+				Client.Player_Action.Fire("SKILL", true)
 			end
-
-			if input.UserInputType == Enum.UserInputType.MouseButton2 then
-				Client.Player_Action.Fire("BLOCK", false)
-			end
-		end)
+		elseif input.KeyCode == Enum.KeyCode.M then
+			-- Bản đồ
+			warn("Map")
+		elseif input.KeyCode == Enum.KeyCode.B then
+			-- Túi đồ/Hành trang --
+			warn("Bag")
+		elseif input.KeyCode == Enum.KeyCode.P then
+			-- Tạm dừng/Tùy chọn
+			warn("Pause/Option")
+		end
 	end)
+	-- On Release Right Mouse Button
+	UserInputService.InputEnded:Connect(function(input: InputObject, gameProcessedEvent: boolean)
+		if gameProcessedEvent then
+			return
+		end
+
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			Client.Player_Action.Fire("BLOCK", false)
+		end
+	end)
+	-- 	end)
 end
 
 return init

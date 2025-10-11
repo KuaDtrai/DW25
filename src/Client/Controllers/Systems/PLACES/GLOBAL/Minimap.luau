@@ -31,14 +31,13 @@ function Class.new(): Minimap
 	camera.CameraType = Enum.CameraType.Scriptable
 	camera.FieldOfView = 1
 	frame.CurrentCamera = camera
-
 	for _, object in ipairs(MapFolder:GetChildren()) do
 		local clone = object:Clone()
 		clone.Parent = frame
 	end
 
 	RunService.RenderStepped:Connect(function()
-		camera.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 2500, 0), hrp.Position)
+		camera.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 5000, 0), hrp.Position)
 		playerIcon.Rotation = -hrp.Orientation.Y
 	end)
 
