@@ -25,6 +25,7 @@ function init:_Setup()
 
 	self.GUI = GUI.new()
 	self.Minimap = Minimap.new()
+	self.UI = UI.new()
 
 	self.ComboResetTime = 1
 	self.ComboResetTask = nil
@@ -38,7 +39,6 @@ function init:_Setup()
 		4,
 		6,
 	}
-	self.UI = UI.new()
 end
 
 function init:_Start()
