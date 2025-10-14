@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CONSTANTS = require(ReplicatedStorage.Shared.Libraries.CONSTANTS)
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
+local LobbyUI = require(script.LobbyUI)
 
 export type System = {
 	_Extensions: { Openday.Extension },
@@ -19,6 +20,7 @@ function init:_Setup()
 		script:Destroy()
 		return
 	end
+	self.LobbyUI = LobbyUI.new()
 end
 
 function init:_Start() end
