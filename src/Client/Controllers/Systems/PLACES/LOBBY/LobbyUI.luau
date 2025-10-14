@@ -67,7 +67,7 @@ function Class.new(): LobbyUI
 	end
 	if self.Map1BTN:IsA("ImageButton") then
 		self.Map1BTN.MouseButton1Click:Connect(function()
-			Client.TeleportToCampaign.Fire("Map1")
+			Client.TeleportToCampaign.Fire("MAP1")
 		end)
 	end
 
@@ -79,7 +79,7 @@ function Class.new(): LobbyUI
 	end
 	if self.Map1BTN1:IsA("ImageButton") then
 		self.Map1BTN1.MouseButton1Click:Connect(function()
-			Client.TeleportToCampaign.Fire("Arena")
+			Client.MatchMaking.Fire()
 		end)
 	end
 	return self

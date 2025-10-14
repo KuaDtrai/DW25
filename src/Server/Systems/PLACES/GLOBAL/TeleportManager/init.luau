@@ -26,8 +26,6 @@ function init:_Start()
 			tele_to = CONSTANTS.LACDUONG_ID
 		elseif campaign == "LOBBY" then
 			tele_to = CONSTANTS.LOBBY_ID
-		elseif campaign == "ARENA" then
-			tele_to = CONSTANTS.ARENDA_ID
 		elseif campaign == "MAP1" then
 			tele_to = CONSTANTS.MAP1_ID
 		elseif campaign == "MAP2" then
@@ -37,6 +35,11 @@ function init:_Start()
 		end
 		warn(campaign)
 		TeleportService:Teleport(tele_to, player, "Teleport")
+	end)
+
+	Server.MatchMaking.SetCallback(function(player, Value)
+		warn("Match making", player, Value)
+		TeleportService:Teleport(CONSTANTS.ARENA_ID, player)
 	end)
 end
 
