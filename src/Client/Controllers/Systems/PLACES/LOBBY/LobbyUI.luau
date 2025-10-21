@@ -2,8 +2,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
+warn(Player)
 local Client = require(ReplicatedStorage.Shared.Network.Client)
 local CONSTANTS = require(ReplicatedStorage.Shared.Libraries.CONSTANTS)
+local Utilities = require(ReplicatedStorage.Shared.Modules.Utilities)
 
 export type LobbyUI = {
 	__index: LobbyUI,
@@ -67,6 +69,7 @@ function Class.new(): LobbyUI
 	end
 	if self.Map1BTN:IsA("ImageButton") then
 		self.Map1BTN.MouseButton1Click:Connect(function()
+			Utilities.ShowLoadingUI(Player)
 			Client.TeleportToCampaign.Fire("MAP1")
 		end)
 	end
@@ -79,6 +82,7 @@ function Class.new(): LobbyUI
 	end
 	if self.Map1BTN1:IsA("ImageButton") then
 		self.Map1BTN1.MouseButton1Click:Connect(function()
+			Utilities.ShowLoadingUI(Player)
 			Client.MatchMaking.Fire()
 		end)
 	end

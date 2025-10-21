@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local Client = require(ReplicatedStorage.Shared.Network.Client)
 local CONSTANTS = require(ReplicatedStorage.Shared.Libraries.CONSTANTS)
+local Utilities = require(ReplicatedStorage.Shared.Modules.Utilities)
 
 export type UI = {
 	__index: UI,
@@ -51,6 +52,7 @@ function Class.new(): UI
 			if game.PlaceId == CONSTANTS.LACDUONG_ID then
 				warn("hihi")
 			else
+				Utilities.ShowLoadingUI(Player)
 				Client.TeleportToCampaign.Fire("LACDUONG")
 				warn("haha")
 			end

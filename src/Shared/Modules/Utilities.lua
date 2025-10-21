@@ -21,6 +21,12 @@ local function Lerp(a: number, b: number, t: number): number
 	return a + (b - a) * t
 end
 
+function ShowLoadingUI(player: Player)
+	local GUI = player.PlayerGui
+	local LoadingUI = GUI:FindFirstChild("TeleportScreen")
+	LoadingUI.Enabled = true
+end
+
 local function GetOrCreateAttachment(part: BasePart, name: string, axis: Vector3?, secondaryAxis: Vector3?): Attachment
 	local attachment = part:FindFirstChild(name)
 	if attachment and attachment:IsA("Attachment") then
@@ -303,6 +309,7 @@ function QuadBezier(t: number, p0: Vector3, p1: Vector3, p2: Vector3): Vector3
 end
 
 return {
+	ShowLoadingUI = ShowLoadingUI,
 	GetAssemblyMass = GetAssemblyMass,
 	GetLongestAxis = GetLongestAxis,
 	GetVolume = GetVolume,
