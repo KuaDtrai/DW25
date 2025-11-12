@@ -23,7 +23,7 @@ function Class.new(): Minimap
 
 	local playerGui = Player:WaitForChild("PlayerGui")
 	local mainUI = playerGui:WaitForChild("MainUI") :: ScreenGui
-	local mainframe = mainUI:WaitForChild("MainUI") :: Frame
+	local mainframe = mainUI:WaitForChild("MainFrame") :: Frame
 	local frame = mainframe:WaitForChild("MapFrame") :: ViewportFrame
 	local playerIcon = frame:WaitForChild("ImageLabel") :: ImageLabel
 

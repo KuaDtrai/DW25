@@ -26,7 +26,7 @@ function Class.new(): LobbyUI
 	self.ArenaList = self.PlayerGui:WaitForChild("ArenaList") :: ScreenGui
 
 	--MainUI
-	self.MainUIFrame = self.MainUI:WaitForChild("MainUI") :: Frame
+	self.MainUIFrame = self.MainUI:WaitForChild("MainFrame") :: Frame
 	self.BTN_Campaign = self.MainUIFrame:WaitForChild("BTN_Campaign") :: ImageButton
 	self.BTN_Arena = self.MainUIFrame:WaitForChild("BTN_Arena") :: ImageButton
 

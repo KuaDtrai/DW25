@@ -22,13 +22,9 @@ function Class:onDash(player: Player)
 	if character and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart") then
 		local humanoid = character.Humanoid
 		local humanoidRootPart = character.HumanoidRootPart
-
-		-- Kiểm tra nếu nhân vật đang đứng trên mặt đất
-		-- if humanoid.FloorMaterial ~= Enum.Material.Air then
-		-- Tính toán hướng lướt (theo hướng nhân vật đang di chuyển hoặc nhìn)
 		local moveDirection = humanoid.MoveDirection
 		if moveDirection.Magnitude == 0 then
-			moveDirection = humanoidRootPart.CFrame.LookVector -- Lướt theo hướng nhìn nếu không di chuyển
+			moveDirection = humanoidRootPart.CFrame.LookVector
 		end
 
 		local animationId = CONSTANTS:getAnimation("DASH")
@@ -38,7 +34,7 @@ function Class:onDash(player: Player)
 		end
 
 		-- Áp dụng lực lướt
-		local dashSpeed = 50 -- Tốc độ lướt (có thể điều chỉnh)
+		local dashSpeed = 75 -- Tốc độ lướt (có thể điều chỉnh)
 		local dashDuration = 0.3 -- Thời gian lướt (giây)
 		local bodyVelocity = Instance.new("BodyVelocity")
 		bodyVelocity.MaxForce = Vector3.new(math.huge, 0, math.huge)
