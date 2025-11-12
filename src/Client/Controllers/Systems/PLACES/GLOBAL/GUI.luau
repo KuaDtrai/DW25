@@ -1,73 +1,124 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local camera = Workspace.CurrentCamera
 
-local PlayerGUIFolder = ReplicatedStorage.Shared.Assets
+local Player = Players.LocalPlayer
+local PlayerGUIFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Assets")
 
 export type GUI = {
 	__index: GUI,
+	HealthGui: BillboardGui,
+	PowGui: BillboardGui,
+	HealthBar: Frame,
+	PowBar: Frame,
+	Connections: { RBXScriptConnection },
 	new: () -> GUI,
+	AttachToCharacter: (self: GUI, character: Model) -> (),
+	UpdateHealth: (self: GUI, humanoid: Humanoid) -> (),
 	Destroy: (self: GUI) -> (),
 }
-local Class: GUI = {} :: GUI
-Class.__index = Class
 
-function Class.new(): GUI
-	local self: GUI = setmetatable({} :: any, Class)
+local GUIClass = {} :: GUI
+GUIClass.__index = GUIClass
 
-	-- Assume you have BillboardGui templates in ReplicatedStorage.GuiTemplates
-	local guiFolder = PlayerGUIFolder:FindFirstChild("PlayerGUI")
+-- Khởi tạo GUI cho người chơi
+function GUIClass.new(): GUI
+	local self = setmetatable({} :: any, GUIClass)
 
+	local guiFolder = PlayerGUIFolder:WaitForChild("PlayerGUI")
 	local healthTemplate = guiFolder:WaitForChild("Health") :: BillboardGui
 	local powTemplate = guiFolder:WaitForChild("Pow") :: BillboardGui
 
-	-- Clone so each character has its own
-	self.Health = healthTemplate:Clone()
-	self.HealthValue = self.Health:WaitForChild("Frame") :: Frame
-	self.Pow = powTemplate:Clone()
-	self.PowValue = self.Pow:WaitForChild("Frame") :: Frame
+	-- Clone để mỗi nhân vật có bản riêng
+	self.HealthGui = healthTemplate:Clone()
+	self.HealthBar = self.HealthGui:WaitForChild("Frame") :: Frame
 
-	Class.ShowGui(self.Health, self.Pow, self.HealthValue, self.PowValue)
+	self.PowGui = powTemplate:Clone()
+	self.PowBar = self.PowGui:WaitForChild("Frame") :: Frame
+
+	self.Connections = {}
+
+	-- Khi nhân vật được spawn
+	table.insert(
+		self.Connections,
+		Player.CharacterAdded:Connect(function(character)
+			self:AttachToCharacter(character)
+			camera.CameraSubject = character.Head
+		end)
+	)
+
+	-- Nếu nhân vật đã tồn tại (respawn nhanh)
+
+	if Player.Character then
+		camera.CameraSubject = Player.Character.LowerTorso
+		self:AttachToCharacter(Player.Character)
+	end
 
 	return self
 end
 
-function Class.ShowGui(HealthGUI, PowGUI, HealthValue, PowValue)
-	Player.CharacterAdded:Connect(function(character)
-		local head = character:WaitForChild("Head")
-		local humanoid = character:WaitForChild("Humanoid")
+-- Gắn GUI vào nhân vật mới
+function GUIClass:AttachToCharacter(character: Model)
+	local head = character:WaitForChild("Head")
+	local humanoid = character:WaitForChild("Humanoid")
 
-		HealthGUI.Parent = head
-		PowGUI.Parent = head
+	self.HealthGui.Parent = head
+	self.PowGui.Parent = head
 
-		local function update()
-			Class.updateHealth(humanoid, HealthGUI, HealthValue, PowValue)
-		end
+	-- Cập nhật lần đầu
+	self:UpdateHealth(humanoid)
 
-		humanoid.HealthChanged:Connect(update)
-		humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(update)
+	-- Kết nối sự kiện
+	table.insert(
+		self.Connections,
+		humanoid.HealthChanged:Connect(function()
+			self:UpdateHealth(humanoid)
+		end)
+	)
 
-		update() -- run once at spawn
-	end)
+	table.insert(
+		self.Connections,
+		humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(function()
+			self:UpdateHealth(humanoid)
+		end)
+	)
 end
 
-function Class.updateHealth(humanoid, HealthGUI, HealthValue, PowValue)
+-- Cập nhật thanh máu
+function GUIClass:UpdateHealth(humanoid: Humanoid)
 	local health = humanoid.Health
 	local maxHealth = humanoid.MaxHealth
-	local percent = health / maxHealth
-	HealthValue.Size = UDim2.new(percent, 0, 1, 0)
+	local percent = math.clamp(health / maxHealth, 0, 1)
 
-	-- Optional: change color when low
+	self.HealthBar.Size = UDim2.new(percent, 0, 1, 0)
+
+	-- Đổi màu theo % máu
+	local color
 	if percent > 0.5 then
-		HealthValue.BackgroundColor3 = Color3.new(0, 1, 0)
+		color = Color3.fromRGB(0, 255, 0)
 	elseif percent > 0.25 then
-		HealthValue.BackgroundColor3 = Color3.new(1, 1, 0)
+		color = Color3.fromRGB(255, 255, 0)
 	else
-		HealthValue.BackgroundColor3 = Color3.new(1, 0, 0)
+		color = Color3.fromRGB(255, 0, 0)
+	end
+	self.HealthBar.BackgroundColor3 = color
+end
+
+-- Hủy GUI và ngắt kết nối
+function GUIClass:Destroy()
+	for _, conn in ipairs(self.Connections) do
+		conn:Disconnect()
+	end
+	self.Connections = {}
+
+	if self.HealthGui then
+		self.HealthGui:Destroy()
+	end
+	if self.PowGui then
+		self.PowGui:Destroy()
 	end
 end
 
-function Class:Destroy() end
-
-return Class
+return GUIClass

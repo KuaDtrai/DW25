@@ -7,23 +7,8 @@ export type Profile = {
 }
 
 local Template: Data = {
-	TimePlayed = 0,
-	MatchPlayed = 0,
-	Wins = 0,
-	PKs = 0,
-	Coin = 0,
-
-	StatUpgradePoints = 5,
 	Inventory = {},
-	Equipment = "SwordShield",
-	Character_Stat_Profile = {
-		[1] = {
-			Strength = 0,
-			Dexterity = 0,
-			Constitution = 0,
-			Athletics = 0,
-		},
-	},
+	Unlocked_Heros = {},
 }
 
 local Profiles: { [Player]: Profile } = {}

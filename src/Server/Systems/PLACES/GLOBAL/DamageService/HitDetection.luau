@@ -13,7 +13,7 @@ local Class: HitDetection = {} :: HitDetection
 Class.__index = Class
 
 -- Cấu hình
-local DAMAGE = 10
+local DAMAGE = 20
 
 function Class.new(): HitDetection
 	local self: HitDetection = setmetatable({} :: any, Class)

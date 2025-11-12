@@ -21,103 +21,51 @@ local init = {
 } :: System
 
 function init:_Setup()
-	-- self.PlayerState = PlayerState.new()
-
 	self.GUI = GUI.new()
 	self.Minimap = Minimap.new()
 	self.UI = UI.new()
-
-	self.ComboResetTime = 1
-	self.ComboResetTask = nil
+	-- Chỉ giữ cooldown cơ bản
 	self.cooldown = false
 	self.cooldownTime = 0.5
-	self.ComboCooldownTime = 1
-	self.comboCount = 0
-	self.SkillCooldown = false
-	self.SkillCooldownTime = {
-		2,
-		4,
-		6,
-	}
 end
 
 function init:_Start()
-	-- Player.CharacterAdded:Connect(function(character: Model)
-	-- 	warn(character)
 	UserInputService.InputBegan:Connect(function(input, gameProcessedEvent: boolean)
-		warn(1)
 		if gameProcessedEvent then
 			return
 		end
-		warn(input)
-		-- Mouse 1 Click
+
+		-- Mouse 1 Click - Tấn công
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			-- Tấn công --
 			if not self.cooldown then
 				self.cooldown = true
+				Client.Player_Action.Fire("ATTACK", true)
 
-				-- Cancel old reset timer
-				if self.comboResetTask then
-					task.cancel(self.comboResetTask)
-					self.comboResetTask = nil
-				end
-
-				-- Increment combo
-				if self.comboCount <= 2 and self.SkillCooldown == false then
-					self.comboCount += 1
-					-- Normal attack cooldown
-					Client.Player_Action.Fire("ATTACK", true)
-					task.delay(self.cooldownTime, function()
-						self.cooldown = false
-					end)
-				else
-					-- After 3rd hit → Combo cooldown
-					task.delay(self.ComboCooldownTime, function()
-						self.comboCount = 0
-						self.SkillCooldown = false
-						self.cooldown = false
-					end)
-				end
-				-- Start/reset combo timeout timer
-				self.comboResetTask = task.delay(self.ComboResetTime, function()
-					self.comboCount = 0
+				-- Reset cooldown sau 0.5s
+				task.delay(self.cooldownTime, function()
+					self.cooldown = false
 				end)
 			end
-			-- Client.Player_Action.Fire("ATTACK", true)
+
+		-- Right Mouse Button - Thủ
 		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-			-- Thủ --
 			Client.Player_Action.Fire("BLOCK", true)
+
+		-- Q - Lướt
 		elseif input.KeyCode == Enum.KeyCode.Q then
-			-- Lướt --
 			Client.Player_Action.Fire("DASH", true)
+
+		-- E - Skill (gửi kèm combo index hiện tại từ server)
 		elseif input.KeyCode == Enum.KeyCode.E then
-			-- Chiêu --
-			if self.comboCount == 1 then
-				warn("Skill 1")
-				self.SkillCooldown = true
-				Client.Player_Action.Fire("SKILL", true)
-			elseif self.comboCount == 2 then
-				warn("Skill 2")
-				self.SkillCooldown = true
-				Client.Player_Action.Fire("SKILL", true)
-			elseif self.comboCount == 3 then
-				warn("Skill 3")
-				self.SkillCooldown = true
-				Client.Player_Action.Fire("SKILL", true)
+			local currentCombo = Player:GetAttribute("Combo") or 0
+			if currentCombo > 0 then
+				Client.Player_Action.Fire("SKILL", currentCombo)
 			end
-		elseif input.KeyCode == Enum.KeyCode.M then
-			-- Bản đồ
-			warn("Map")
-		elseif input.KeyCode == Enum.KeyCode.B then
-			-- Túi đồ/Hành trang --
-			warn("Bag")
-		elseif input.KeyCode == Enum.KeyCode.P then
-			-- Tạm dừng/Tùy chọn
-			warn("Pause/Option")
 		end
 	end)
-	-- On Release Right Mouse Button
-	UserInputService.InputEnded:Connect(function(input: InputObject, gameProcessedEvent: boolean)
+
+	-- Release Right Mouse Button
+	UserInputService.InputEnded:Connect(function(input, gameProcessedEvent)
 		if gameProcessedEvent then
 			return
 		end
@@ -126,7 +74,6 @@ function init:_Start()
 			Client.Player_Action.Fire("BLOCK", false)
 		end
 	end)
-	-- 	end)
 end
 
 return init
