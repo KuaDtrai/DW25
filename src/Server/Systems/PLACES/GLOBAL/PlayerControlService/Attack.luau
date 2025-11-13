@@ -173,6 +173,7 @@ function Class:executeAttack(Player: Player, comboData: any)
 end
 
 -- 🔹 Hàm tạo hitbox vuông mới thay cho clone template
+-- 🔹 Hàm tạo hitbox vuông mới thay cho clone template
 function Class:spawnArcHitbox(character: Model, activeTime: number)
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	if not hrp then
@@ -185,8 +186,14 @@ function Class:spawnArcHitbox(character: Model, activeTime: number)
 	part.CFrame = hrp.CFrame * CFrame.new(0, 0, -4)
 	part.CanCollide = false
 	part.Anchored = true
-	part.Parent = workspace
+	part.Parent = character
 	CollectionService:AddTag(part, "HITBOX")
+
+	-- 🧠 Lưu chủ sở hữu (Player)
+	local ownerValue = Instance.new("ObjectValue")
+	ownerValue.Name = "Owner"
+	ownerValue.Value = Players:GetPlayerFromCharacter(character)
+	ownerValue.Parent = part
 
 	-- Hiển thị hitbox (debug)
 	if self.HitboxVisible then
@@ -204,7 +211,6 @@ function Class:spawnArcHitbox(character: Model, activeTime: number)
 		Highlight.Visible = true
 	end
 
-	-- Tự hủy sau activeTime
 	Debris:AddItem(part, activeTime)
 end
 

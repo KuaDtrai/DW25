@@ -1,6 +1,7 @@
 --!strict
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HitBoxFolder = ReplicatedStorage.Shared.Assets.HitBox :: Folder
+local Players = game.Players
 local CONSTANTS = require(ReplicatedStorage.Shared.Libraries.CONSTANTS)
 local Debris = game:GetService("Debris")
 local VFX = require(script.Parent.VFX)
@@ -20,12 +21,6 @@ function Class.new(Attack): Skill
 	local self: Skill = setmetatable({} :: any, Class)
 	self.Attack = Attack
 	self.VFX = VFX.new()
-
-	self.Combo = {
-		HitBoxFolder:FindFirstChild("45_degree"),
-		HitBoxFolder:FindFirstChild("90_degree"),
-		HitBoxFolder:FindFirstChild("180_degree"),
-	}
 
 	self.SkillAnims = {
 		CONSTANTS:getAnimation("SKILL1"),
@@ -122,35 +117,60 @@ function Class:onSkill(Player: Player)
 	end)
 end
 
--- ⚔️ Sinh hitbox và khoá di chuyển tạm thời
-function Class.spawnArcHitbox(character: Model, hitbox: Model, time: number, color: Color3)
+-- ⚔️ Sinh hitbox và khoá di chuyển tạm thời (tạo mới Part thay vì clone)
+function Class.spawnArcHitbox(character: Model, _hitbox: Model, time: number, color: Color3)
 	local hrp = character:FindFirstChild("HumanoidRootPart")
-	local Humanoid = character:FindFirstChild("Humanoid")
-	if not hrp or not Humanoid or not hitbox then
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not hrp or not humanoid then
 		return
 	end
 
-	local oldWalkSpeed = Humanoid.WalkSpeed
-	Humanoid.WalkSpeed = 0
+	-- 🧱 Tạo hitbox mới (thay vì clone)
+	local part = Instance.new("Part")
+	part.Name = "SkillHitbox_" .. game:GetService("HttpService"):GenerateGUID(false)
+	part.Parent = character
+	CollectionService:AddTag(part, "HITBOX")
+	part.Size = Vector3.new(12, 8, 12)
+	part.CFrame = hrp.CFrame * CFrame.new(0, 0, -6)
+	part.Anchored = true
+	part.CanCollide = false
+	part.Massless = true
 
-	local clone = hitbox:Clone()
-	clone.Parent = hrp
-	clone.CFrame = hrp.CFrame * CFrame.new(0, 0, -5) * CFrame.Angles(0, math.rad(180), 0)
+	-- 🧠 Lưu chủ sở hữu
+	local ownerValue = Instance.new("ObjectValue")
+	ownerValue.Name = "Owner"
+	ownerValue.Value = Players:GetPlayerFromCharacter(character)
+	ownerValue.Parent = part
 
-	local weld = Instance.new("WeldConstraint")
-	weld.Part0 = hrp
-	weld.Part1 = clone
-	weld.Parent = clone
+	-- 🎨 Hiển thị hitbox nếu đang bật chế độ debug
+	if shared.HitboxVisible then
+		part.Transparency = 1
+		part.Color = color
 
-	clone.Transparency = 1
-	clone.Color = color
+		local highlight = Instance.new("SelectionBox")
+		highlight.Name = "SkillHitboxHighlight"
+		highlight.Parent = part
+		highlight.Adornee = part
+		highlight.LineThickness = 0.05
+		highlight.SurfaceTransparency = 1
+		highlight.Transparency = 0.5
+		highlight.Color3 = color
+		highlight.Visible = true
+	else
+		part.Transparency = 1
+	end
 
+	-- 🔒 Khóa di chuyển trong lúc skill
+	local oldWalk = humanoid.WalkSpeed
+	humanoid.WalkSpeed = 0
+
+	-- 🕒 Xóa hitbox sau thời gian animation
 	task.delay(time, function()
-		if clone and clone.Parent then
-			clone:Destroy()
+		if part and part.Parent then
+			part:Destroy()
 		end
-		if Humanoid and Humanoid.Parent then
-			Humanoid.WalkSpeed = oldWalkSpeed
+		if humanoid and humanoid.Parent then
+			humanoid.WalkSpeed = oldWalk
 		end
 	end)
 end
