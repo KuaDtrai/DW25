@@ -26,7 +26,7 @@ function Class.new(): Attack
 
 	self.VFX = VFX.new()
 	self.ComboResetTime = 1.5
-	self.HitboxVisible = false
+	self.HitboxVisible = true
 	self.ComboAnims = {
 		CONSTANTS:getAnimation("COMBO1"),
 		CONSTANTS:getAnimation("COMBO2"),
@@ -115,6 +115,12 @@ function Class:executeAttack(Player: Player, comboData: any)
 	track.Looped = false
 	self.VFX.PlayVFX(character, track.Length)
 	track:Play()
+
+	if comboIndex == 3 then
+		track:AdjustSpeed(2.5)
+	else
+		track:AdjustSpeed(2)
+	end
 	Debris:AddItem(anim, 2)
 
 	local animLength = track.Length
@@ -182,11 +188,15 @@ function Class:spawnArcHitbox(character: Model, activeTime: number)
 
 	local part = Instance.new("Part")
 	part.Name = "aisarwinning_" .. HttpService:GenerateGUID(false)
-	part.Size = Vector3.new(10, 10, 10)
-	part.CFrame = hrp.CFrame * CFrame.new(0, 0, -4)
+	part.Size = Vector3.new(10, 10, 5)
+	part.CFrame = hrp.CFrame * CFrame.new(0, 0, -7.5)
 	part.CanCollide = false
 	part.Anchored = true
 	part.Parent = character
+	-- local weld = Instance.new("WeldConstraint")
+	-- weld.Part0 = part.Parent
+	-- weld.Part1 = part
+	-- weld.Parent = part
 	CollectionService:AddTag(part, "HITBOX")
 
 	-- 🧠 Lưu chủ sở hữu (Player)
@@ -200,15 +210,15 @@ function Class:spawnArcHitbox(character: Model, activeTime: number)
 		part.Transparency = 1
 		part.Color = Color3.fromRGB(17, 17, 17)
 
-		local Highlight = Instance.new("SelectionBox")
-		Highlight.Name = "highlight"
-		Highlight.Parent = part
-		Highlight.Adornee = part
-		Highlight.LineThickness = 0.05
-		Highlight.SurfaceTransparency = 1
-		Highlight.Transparency = 0.5
-		Highlight.Color3 = Color3.fromRGB(166, 0, 0)
-		Highlight.Visible = true
+		-- local Highlight = Instance.new("SelectionBox")
+		-- Highlight.Name = "highlight"
+		-- Highlight.Parent = part
+		-- Highlight.Adornee = part
+		-- Highlight.LineThickness = 0.05
+		-- Highlight.SurfaceTransparency = 1
+		-- Highlight.Transparency = 0.5
+		-- Highlight.Color3 = Color3.fromRGB(166, 0, 0)
+		-- Highlight.Visible = true
 	end
 
 	Debris:AddItem(part, activeTime)
