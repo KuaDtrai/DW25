@@ -98,27 +98,6 @@ function init:_Start()
 	self.BTN_Skill.MouseButton1Click:Connect(function()
 		Client.Player_Action.Fire("SKILL", true)
 	end)
-
-	--!strict
-	local Lighting = game:GetService("Lighting")
-
-	-- Cấu hình
-	local DAY_LENGTH = 60 * 60 -- 60 phút = 3600 giây ngoài đời
-
-	-- Tính toán tốc độ tăng ClockTime (24 giờ game / 3600 giây thực)
-	local HOURS_PER_SECOND = 24 / DAY_LENGTH
-
-	-- Khởi tạo giá trị ban đầu (có thể để tùy ý, ví dụ 6 = 6 giờ sáng)
-	Lighting.ClockTime = 6
-
-	-- Vòng lặp cập nhật thời gian
-	while true do
-		task.wait(1)
-		Lighting.ClockTime += HOURS_PER_SECOND
-		if Lighting.ClockTime >= 24 then
-			Lighting.ClockTime -= 24
-		end
-	end
 end
 
 return init

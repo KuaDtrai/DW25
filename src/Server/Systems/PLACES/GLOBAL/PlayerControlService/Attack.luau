@@ -15,24 +15,21 @@ export type Attack = {
 	Destroy: (self: Attack) -> (),
 }
 
-local Class: Attack = {} :: Attack
+local Class: Attack = {}
 Class.__index = Class
 
--- Dữ liệu combo cho từng player
 local playerComboData: { [Player]: any } = {}
 
 function Class.new(): Attack
-	local self: Attack = setmetatable({} :: any, Class)
-
+	local self: Attack = setmetatable({}, Class)
 	self.VFX = VFX.new()
-	self.ComboResetTime = 1.5
+	self.ComboResetTime = 1
 	self.HitboxVisible = true
 	self.ComboAnims = {
 		CONSTANTS:getAnimation("COMBO1"),
 		CONSTANTS:getAnimation("COMBO2"),
 		CONSTANTS:getAnimation("COMBO3"),
 	}
-
 	return self
 end
 
@@ -52,7 +49,9 @@ function Class:onAttack(Player: Player)
 		playerComboData[Player] = {
 			ComboIndex = 0,
 			IsAnimating = false,
-			AttackQueue = false,
+			NextComboQueued = false,
+			CurrentTrack = nil,
+			CurrentComboWindow = 0,
 			ResetTimer = nil,
 			IsOnCooldown = false,
 		}
@@ -61,26 +60,21 @@ function Class:onAttack(Player: Player)
 	local comboData = playerComboData[Player]
 
 	if comboData.IsOnCooldown then
-		warn(Player.Name, "⛔ Đang hồi chiêu, không thể tấn công.")
 		return
 	end
 
-	if comboData.ResetTimer then
-		task.cancel(comboData.ResetTimer)
-		comboData.ResetTimer = nil
+	local track = comboData.CurrentTrack
+	if track and track.IsPlaying then
+		local timeLeft = track.Length - track.TimePosition
+		if timeLeft > comboData.CurrentComboWindow then
+			return
+		end
 	end
 
-	if comboData.IsAnimating then
-		if not comboData.AttackQueue then
-			comboData.AttackQueue = true
-			warn(Player.Name, "🕐 Đang animation → thêm 1 queue (tối đa 1)")
-		else
-			warn(Player.Name, "⚠️ Queue đã đầy → bỏ qua click")
-		end
-	else
-		local nextIndex = (comboData.ComboIndex % #self.ComboAnims) + 1
-		comboData.ComboIndex = nextIndex
-		warn(Player.Name, "💥 Đánh combo:", nextIndex)
+	comboData.NextComboQueued = true
+
+	if not comboData.IsAnimating then
+		comboData.ComboIndex = (comboData.ComboIndex % #self.ComboAnims) + 1
 		self:executeAttack(Player, comboData)
 	end
 end
@@ -101,11 +95,15 @@ function Class:executeAttack(Player: Player, comboData: any)
 	local animId = self.ComboAnims[comboIndex]
 
 	comboData.IsAnimating = true
-	comboData.AttackQueue = false
+	comboData.NextComboQueued = false
 
 	Player:SetAttribute("Combo", comboIndex)
 	Player:SetAttribute("IsAttacking", true)
-	warn(Player.Name, "▶️ Thực thi combo", comboIndex, "Anim:", animId)
+
+	-- ✅ BUỘC ĐỨNG IM - DISABLE WALK
+	humanoid.WalkSpeed = 0
+	humanoid.JumpPower = 0
+	humanoid.JumpHeight = 0
 
 	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
 	local anim = Instance.new("Animation")
@@ -113,73 +111,78 @@ function Class:executeAttack(Player: Player, comboData: any)
 	local track = animator:LoadAnimation(anim)
 	track.Priority = Enum.AnimationPriority.Action
 	track.Looped = false
+	comboData.CurrentTrack = track
+
 	self.VFX.PlayVFX(character, track.Length)
 	track:Play()
 
 	if comboIndex == 3 then
-		track:AdjustSpeed(2.5)
-	else
 		track:AdjustSpeed(2)
+	else
+		track:AdjustSpeed(1.5)
 	end
-	Debris:AddItem(anim, 2)
 
-	local animLength = track.Length
-	local hitTime = math.clamp(animLength * 0.4, 0.1, 1)
+	local actualLength = track.Length / track.Speed
+	local dynamicWindow = math.max(actualLength * 0.5, 0.1)
 
-	-- Gọi hàm tạo hitbox mới
+	comboData.CurrentComboWindow = dynamicWindow
+
+	warn(
+		string.format(
+			"Combo %d | Origin: %.3f | Speed: %.1f | Actual: %.3f | Window: %.3f",
+			comboIndex,
+			track.Length,
+			track.Speed,
+			actualLength,
+			dynamicWindow
+		)
+	)
+
+	local hitTime = math.clamp(actualLength * 0.4, 0.1, 1)
 	self:spawnArcHitbox(character, hitTime)
 
-	task.delay(animLength, function()
+	task.delay(actualLength, function()
 		if not character or not character.Parent then
 			return
 		end
+
+		-- ✅ MỞ KHÓA DI CHUYỂN
+		humanoid.WalkSpeed = 16
+		humanoid.JumpPower = 50
+		humanoid.JumpHeight = 7.2
+
+		comboData.CurrentTrack = nil
 		comboData.IsAnimating = false
 		Player:SetAttribute("IsAttacking", false)
 
-		-- Nếu có queue → đánh combo tiếp theo
-		if comboData.AttackQueue then
-			comboData.AttackQueue = false
+		if comboData.NextComboQueued then
 			comboData.ComboIndex = (comboData.ComboIndex % #self.ComboAnims) + 1
-			warn(Player.Name, "🔁 Queue → chuyển sang combo:", comboData.ComboIndex)
 			self:executeAttack(Player, comboData)
 			return
+		else
+			comboData.ResetTimer = task.delay(dynamicWindow, function()
+				if Player.Parent then
+					comboData.ComboIndex = 0
+					Player:SetAttribute("Combo", 0)
+				end
+			end)
 		end
 
-		-- Nếu là combo cuối cùng (combo3)
 		if comboIndex == 3 then
-			warn(Player.Name, "🚀 Hoàn thành combo 3 → hồi chiêu.")
 			comboData.IsOnCooldown = true
-
-			comboData.ResetTimer = task.delay(self.ComboResetTime, function()
-				if Player.Parent then
-					comboData.ComboIndex = 0
-					Player:SetAttribute("Combo", 0)
-					comboData.ResetTimer = nil
-					warn(Player.Name, "⏱️ Reset combo sau combo3")
-				end
-			end)
-
-			task.delay(1.5, function()
+			task.delay(self.ComboResetTime, function()
 				if Player.Parent then
 					comboData.IsOnCooldown = false
-					warn(Player.Name, "✅ Hết hồi chiêu, có thể tấn công lại.")
-				end
-			end)
-		else
-			comboData.ResetTimer = task.delay(self.ComboResetTime, function()
-				if Player.Parent then
 					comboData.ComboIndex = 0
 					Player:SetAttribute("Combo", 0)
-					comboData.ResetTimer = nil
-					warn(Player.Name, "⏱️ Reset combo → COMBO1")
 				end
 			end)
 		end
 	end)
+
+	Debris:AddItem(anim, 2)
 end
 
--- 🔹 Hàm tạo hitbox vuông mới thay cho clone template
--- 🔹 Hàm tạo hitbox vuông mới thay cho clone template
 function Class:spawnArcHitbox(character: Model, activeTime: number)
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	if not hrp then
@@ -193,32 +196,16 @@ function Class:spawnArcHitbox(character: Model, activeTime: number)
 	part.CanCollide = false
 	part.Anchored = true
 	part.Parent = character
-	-- local weld = Instance.new("WeldConstraint")
-	-- weld.Part0 = part.Parent
-	-- weld.Part1 = part
-	-- weld.Parent = part
 	CollectionService:AddTag(part, "HITBOX")
 
-	-- 🧠 Lưu chủ sở hữu (Player)
 	local ownerValue = Instance.new("ObjectValue")
 	ownerValue.Name = "Owner"
 	ownerValue.Value = Players:GetPlayerFromCharacter(character)
 	ownerValue.Parent = part
 
-	-- Hiển thị hitbox (debug)
 	if self.HitboxVisible then
 		part.Transparency = 1
 		part.Color = Color3.fromRGB(17, 17, 17)
-
-		-- local Highlight = Instance.new("SelectionBox")
-		-- Highlight.Name = "highlight"
-		-- Highlight.Parent = part
-		-- Highlight.Adornee = part
-		-- Highlight.LineThickness = 0.05
-		-- Highlight.SurfaceTransparency = 1
-		-- Highlight.Transparency = 0.5
-		-- Highlight.Color3 = Color3.fromRGB(166, 0, 0)
-		-- Highlight.Visible = true
 	end
 
 	Debris:AddItem(part, activeTime)
@@ -229,17 +216,16 @@ function Class:resetComboForPlayer(Player: Player)
 	if comboData then
 		if comboData.ResetTimer then
 			task.cancel(comboData.ResetTimer)
-			comboData.ResetTimer = nil
 		end
 		comboData.ComboIndex = 0
 		comboData.IsAnimating = false
-		comboData.AttackQueue = false
+		comboData.NextComboQueued = false
 		comboData.IsOnCooldown = false
+		comboData.CurrentTrack = nil
+		comboData.CurrentComboWindow = 0
 	end
-
 	Player:SetAttribute("Combo", 0)
 	Player:SetAttribute("IsAttacking", false)
-	warn(Player.Name, "🔁 Combo đã được reset hoàn toàn")
 end
 
 function Class:Destroy()
