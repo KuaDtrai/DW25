@@ -44,24 +44,6 @@ function GUIClass.new(): GUI
 
 	self.Connections = {}
 
-	-- Khi nhân vật của local player spawn
-	table.insert(
-		self.Connections,
-		Player.CharacterAdded:Connect(function(character)
-			character:WaitForChild("Head")
-			self:AttachToCharacter(character)
-			camera.CameraSubject = character:WaitForChild("Head")
-		end)
-	)
-
-	-- Nếu nhân vật đã tồn tại sẵn
-	if Player.Character and Player.Character:FindFirstChild("Head") then
-		task.defer(function()
-			self:AttachToCharacter(Player.Character)
-			camera.CameraSubject = Player.Character:WaitForChild("Head")
-		end)
-	end
-
 	-- Gắn GUI cho người chơi khác
 	for _, other in ipairs(Players:GetPlayers()) do
 		if other ~= Player and other.Character then
