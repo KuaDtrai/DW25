@@ -28,12 +28,13 @@ function init:_Setup()
 end
 
 function init:_Start()
-	-- Lưu combo state cho mỗi player
-	local playerComboData = {}
-
-	-- Cleanup khi player rời game
-	Players.PlayerRemoving:Connect(function(player)
-		playerComboData[player] = nil
+	Players.PlayerAdded:Connect(function(player)
+		player.CharacterAdded:Connect(function(character)
+			local healthScript = character:WaitForChild("Health", 3)
+			if healthScript then
+				healthScript:Destroy()
+			end
+		end)
 	end)
 
 	Server.Player_Action.SetCallback(function(Player, Action, State)
@@ -46,8 +47,6 @@ function init:_Start()
 		elseif Action == "DASH" then
 			self.Dash:onDash(Player)
 		elseif Action == "SKILL" then
-			-- State giờ là combo index (1, 2, 3)
-			local comboIndex = State
 			self.Skill:onSkill(Player)
 		end
 	end)

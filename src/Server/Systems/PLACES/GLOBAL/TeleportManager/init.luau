@@ -19,6 +19,45 @@ local init = {
 function init:_Setup() end
 
 function init:_Start()
+	--!strict
+	local Lighting = game:GetService("Lighting")
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+
+	-- Hàm lấy thời gian Việt Nam (UTC+7)
+	local function getVietnamTime()
+		local dt = os.date("!*t") -- UTC time as table
+		dt.hour = dt.hour + 7
+		if dt.hour >= 24 then
+			dt.hour = dt.hour - 24
+			dt.day = dt.day + 1
+			-- Cập nhật wday nếu cần (không bắt buộc cho giờ)
+			dt.wday = dt.wday + 1
+			if dt.wday > 7 then
+				dt.wday = 1
+			end
+		end
+		return os.time(dt)
+	end
+
+	-- Set thời gian game ban đầu dựa vào thời gian thực Việt Nam
+	local vietnamTime = getVietnamTime()
+	local gameTime = vietnamTime % (24 * 60 * 60) / 3600 -- Giờ thập phân (0-24)
+	Lighting.ClockTime = gameTime
+
+	-- Cập nhật mỗi giây để sync với real time
+	local connection
+	connection = RunService.Heartbeat:Connect(function()
+		local vietnamTime = getVietnamTime()
+		local newGameTime = vietnamTime % (24 * 60 * 60) / 3600
+		Lighting.ClockTime = newGameTime
+	end)
+
+	-- Cleanup khi cần (ví dụ khi player leave, nhưng ở đây là server script thì optional)
+	Players.PlayerRemoving:Connect(function()
+		connection:Disconnect()
+	end)
+
 	Server.TeleportToCampaign.SetCallback(function(player: Player, campaign: string)
 		warn("Teleport to campaign", player, campaign)
 		local tele_to = CONSTANTS.LOBBY_ID

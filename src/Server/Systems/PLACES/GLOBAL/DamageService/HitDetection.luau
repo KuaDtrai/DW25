@@ -17,16 +17,31 @@ local DAMAGE = 20
 
 function Class.new(): HitDetection
 	local self: HitDetection = setmetatable({} :: any, Class)
+
 	CollectionService:GetInstanceAddedSignal("HITBOX"):Connect(function(hitbox: BasePart)
 		warn("New hitbox added", hitbox)
+
 		hitbox.Touched:Connect(function(otherPart)
-			if not otherPart.Parent:FindFirstChildOfClass("Humanoid") or otherPart.Name ~= "HumanoidRootPart" then
+			local hitHumanoid = otherPart.Parent and otherPart.Parent:FindFirstChildOfClass("Humanoid")
+			if not hitHumanoid or otherPart.Name ~= "HumanoidRootPart" then
 				return
 			end
-			warn("Touched", otherPart)
-			local character = otherPart.Parent
 
-			self:ApplyDamage(character:FindFirstChildOfClass("Humanoid"))
+			local hitCharacter = otherPart.Parent
+			local hitPlayer = Players:GetPlayerFromCharacter(hitCharacter)
+
+			-- 🧠 Kiểm tra chủ sở hữu
+			local ownerValue = hitbox:FindFirstChild("Owner")
+			local ownerPlayer = ownerValue and ownerValue.Value
+
+			-- ❌ Bỏ qua nếu hit chính chủ
+			if ownerPlayer and hitPlayer == ownerPlayer then
+				-- print("Bỏ qua va chạm với chủ sở hữu:", ownerPlayer.Name)
+				return
+			end
+
+			warn("✅ Touched:", hitCharacter.Name, "bởi hitbox của", ownerPlayer and ownerPlayer.Name)
+			self:ApplyDamage(hitHumanoid)
 		end)
 	end)
 

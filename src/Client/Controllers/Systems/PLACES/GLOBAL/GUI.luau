@@ -5,12 +5,14 @@ local Workspace = game:GetService("Workspace")
 local camera = Workspace.CurrentCamera
 
 local Player = Players.LocalPlayer
+local OtherPlayers = {}
 local PlayerGUIFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Assets")
 
 export type GUI = {
 	__index: GUI,
 	HealthGui: BillboardGui,
 	PowGui: BillboardGui,
+	NameGui: BillboardGui,
 	HealthBar: Frame,
 	PowBar: Frame,
 	Connections: { RBXScriptConnection },
@@ -30,63 +32,106 @@ function GUIClass.new(): GUI
 	local guiFolder = PlayerGUIFolder:WaitForChild("PlayerGUI")
 	local healthTemplate = guiFolder:WaitForChild("Health") :: BillboardGui
 	local powTemplate = guiFolder:WaitForChild("Pow") :: BillboardGui
+	local nameTemplate = guiFolder:WaitForChild("Playername") :: BillboardGui
 
-	-- Clone để mỗi nhân vật có bản riêng
 	self.HealthGui = healthTemplate:Clone()
 	self.HealthBar = self.HealthGui:WaitForChild("Frame") :: Frame
 
 	self.PowGui = powTemplate:Clone()
 	self.PowBar = self.PowGui:WaitForChild("Frame") :: Frame
 
+	self.NameGui = nameTemplate:Clone()
+
 	self.Connections = {}
 
-	-- Khi nhân vật được spawn
+	-- Gắn GUI cho người chơi khác
+	for _, other in ipairs(Players:GetPlayers()) do
+		if other ~= Player and other.Character then
+			self:AttachToCharacter(other.Character)
+		end
+
+		table.insert(
+			self.Connections,
+			other.CharacterAdded:Connect(function(character)
+				if other ~= Player then
+					character:WaitForChild("Head")
+					self:AttachToCharacter(character)
+				end
+			end)
+		)
+	end
+
+	-- Khi có người mới tham gia server
 	table.insert(
 		self.Connections,
-		Player.CharacterAdded:Connect(function(character)
-			self:AttachToCharacter(character)
-			camera.CameraSubject = character.Head
+		Players.PlayerAdded:Connect(function(other)
+			if other ~= Player then
+				other.CharacterAdded:Connect(function(character)
+					character:WaitForChild("Head")
+					self:AttachToCharacter(character)
+				end)
+			end
 		end)
 	)
-
-	-- Nếu nhân vật đã tồn tại (respawn nhanh)
-
-	if Player.Character then
-		camera.CameraSubject = Player.Character.LowerTorso
-		self:AttachToCharacter(Player.Character)
-	end
 
 	return self
 end
 
--- Gắn GUI vào nhân vật mới
+-- Gắn GUI vào nhân vật
 function GUIClass:AttachToCharacter(character: Model)
-	local head = character:WaitForChild("Head")
-	local humanoid = character:WaitForChild("Humanoid")
+	if not character or not character:FindFirstChild("Head") then
+		character:WaitForChild("Head")
+	end
 
-	self.HealthGui.Parent = head
-	self.PowGui.Parent = head
+	local head = character:FindFirstChild("Head") or character:WaitForChild("Head")
+	local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid")
+	local owner = Players:GetPlayerFromCharacter(character)
 
-	-- Cập nhật lần đầu
-	self:UpdateHealth(humanoid)
+	-- Clone GUI mới cho từng nhân vật
+	local healthGui = self.HealthGui:Clone()
+	local powGui = self.PowGui:Clone()
+	local nameGui = self.NameGui:Clone()
 
-	-- Kết nối sự kiện
-	table.insert(
-		self.Connections,
-		humanoid.HealthChanged:Connect(function()
-			self:UpdateHealth(humanoid)
-		end)
-	)
+	local healthBar = healthGui:WaitForChild("Frame") :: Frame
+	local powBar = powGui:WaitForChild("Frame") :: Frame
+	local nameLabel = nameGui:WaitForChild("NameLabel") :: TextLabel
 
-	table.insert(
-		self.Connections,
-		humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(function()
-			self:UpdateHealth(humanoid)
-		end)
-	)
+	-- Gắn GUI vào đầu nhân vật
+	healthGui.Parent = head
+	powGui.Parent = head
+	nameGui.Parent = head
+
+	-- Hiển thị tên người chơi
+	if owner then
+		nameLabel.Text = owner.DisplayName or owner.Name
+	else
+		nameLabel.Text = character.Name
+	end
+
+	-- Cập nhật máu lần đầu
+	local function updateHealth()
+		local health = humanoid.Health
+		local maxHealth = humanoid.MaxHealth
+		local percent = math.clamp(health / maxHealth, 0, 1)
+		healthBar.Size = UDim2.new(percent, 0, 1, 0)
+
+		local color
+		if percent > 0.5 then
+			color = Color3.fromRGB(0, 255, 0)
+		elseif percent > 0.25 then
+			color = Color3.fromRGB(255, 255, 0)
+		else
+			color = Color3.fromRGB(255, 0, 0)
+		end
+		healthBar.BackgroundColor3 = color
+	end
+
+	humanoid.HealthChanged:Connect(updateHealth)
+	humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(updateHealth)
+	updateHealth()
 end
 
--- Cập nhật thanh máu
+-- Cập nhật thanh máu (cho instance chính của local player)
 function GUIClass:UpdateHealth(humanoid: Humanoid)
 	local health = humanoid.Health
 	local maxHealth = humanoid.MaxHealth
@@ -94,7 +139,6 @@ function GUIClass:UpdateHealth(humanoid: Humanoid)
 
 	self.HealthBar.Size = UDim2.new(percent, 0, 1, 0)
 
-	-- Đổi màu theo % máu
 	local color
 	if percent > 0.5 then
 		color = Color3.fromRGB(0, 255, 0)
@@ -118,6 +162,9 @@ function GUIClass:Destroy()
 	end
 	if self.PowGui then
 		self.PowGui:Destroy()
+	end
+	if self.NameGui then
+		self.NameGui:Destroy()
 	end
 end
 

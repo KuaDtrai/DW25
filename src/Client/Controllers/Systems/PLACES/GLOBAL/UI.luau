@@ -1,6 +1,7 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local Player = Players.LocalPlayer
 local Client = require(ReplicatedStorage.Shared.Network.Client)
 local CONSTANTS = require(ReplicatedStorage.Shared.Libraries.CONSTANTS)
@@ -23,7 +24,7 @@ function Class.new(): UI
 	self.OptionUI = self.PlayerGui:WaitForChild("OptionUI") :: ScreenGui
 
 	--MainUI
-	self.MainUIFrame = self.MainUI:WaitForChild("MainUI") :: Frame
+	self.MainUIFrame = self.MainUI:WaitForChild("MainFrame") :: Frame
 	self.BTN_Option = self.MainUIFrame:WaitForChild("BTN_Option") :: ImageButton
 
 	--Option UI
@@ -31,9 +32,7 @@ function Class.new(): UI
 	self.CloseBTN2 = self.OptionFrame:WaitForChild("BTN_Close") :: ImageButton
 	self.ExitBTN = self.OptionFrame:WaitForChild("BTN_ExitPlace") :: ImageButton
 
-	-- self.LacDuongBTN = self.ScreenGui:WaitForChild("LacDuongThanh") :: TextButton
-	-- self.MAP1BTN = self.ScreenGui:WaitForChild("Map1") :: TextButton
-
+	-- Sự kiện nhấn nút Option
 	if self.BTN_Option:IsA("ImageButton") then
 		self.BTN_Option.MouseButton1Click:Connect(function()
 			self.OptionUI.Enabled = true
@@ -41,12 +40,13 @@ function Class.new(): UI
 		end)
 	end
 
-	--Option UI features
+	-- Sự kiện trong Option UI
 	if self.CloseBTN2:IsA("ImageButton") then
 		self.CloseBTN2.MouseButton1Click:Connect(function()
 			self.OptionUI.Enabled = false
 		end)
 	end
+
 	if self.ExitBTN:IsA("ImageButton") then
 		self.ExitBTN.MouseButton1Click:Connect(function()
 			if game.PlaceId == CONSTANTS.LACDUONG_ID then
@@ -57,6 +57,23 @@ function Class.new(): UI
 				warn("haha")
 			end
 		end)
+	end
+
+	-- 🔹 Kiểm tra nếu người chơi đang trên thiết bị di động
+	if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+		local PlayerModule = require(Player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+		local Controls = PlayerModule:GetControls()
+		local TouchJumpButton = Player.PlayerGui:WaitForChild("TouchGui", 10)
+		if TouchJumpButton then
+			local jumpBtn = TouchJumpButton:FindFirstChild("JumpButton", true)
+			if jumpBtn and jumpBtn:IsA("ImageButton") then
+				-- Kích thước {0,50}, {0,50}
+				jumpBtn.Size = UDim2.new(0, 50, 0, 50)
+				-- Vị trí {1,-30}, {1,-60}
+				jumpBtn.Position = UDim2.new(1, -30, 1, -60)
+				warn("Adjusted Jump Button for Mobile")
+			end
+		end
 	end
 
 	return self
