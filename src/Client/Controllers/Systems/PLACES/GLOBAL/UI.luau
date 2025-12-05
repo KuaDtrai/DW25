@@ -15,6 +15,9 @@ export type UI = {
 local Class: UI = {} :: UI
 Class.__index = Class
 
+local canDash = true
+local dashCooldown = 1
+
 function Class.new(): UI
 	local self: UI = setmetatable({} :: any, Class)
 
@@ -27,6 +30,10 @@ function Class.new(): UI
 	self.MainUIFrame = self.MainUI:WaitForChild("MainFrame") :: Frame
 	self.BTN_Option = self.MainUIFrame:WaitForChild("BTN_Option") :: ImageButton
 
+	self.BTN_Attack = self.MainUIFrame:FindFirstChild("BTN_Attack") :: ImageButton
+	self.BTN_Def = self.MainUIFrame:FindFirstChild("BTN_Def") :: ImageButton
+	self.BTN_Dash = self.MainUIFrame:FindFirstChild("BTN_Dash") :: ImageButton
+	self.BTN_Skill = self.MainUIFrame:FindFirstChild("BTN_Skill") :: ImageButton
 	--Option UI
 	self.OptionFrame = self.OptionUI:WaitForChild("OptionUI") :: Frame
 	self.CloseBTN2 = self.OptionFrame:WaitForChild("BTN_Close") :: ImageButton
@@ -56,6 +63,44 @@ function Class.new(): UI
 				Client.TeleportToCampaign.Fire("LACDUONG")
 				warn("haha")
 			end
+		end)
+	end
+
+	-- Nút ATTACK
+	if self.BTN_Attack:IsA("ImageButton") then
+		self.BTN_Attack.MouseButton1Click:Connect(function()
+			Client.Player_Action.Fire("ATTACK", true)
+		end)
+	end
+
+	-- Nút DEF
+	if self.BTN_Def:IsA("ImageButton") then
+		self.BTN_Def.MouseButton1Down:Connect(function()
+			Client.Player_Action.Fire("BLOCK", true)
+		end)
+
+		self.BTN_Def.MouseButton1Up:Connect(function()
+			Client.Player_Action.Fire("BLOCK", false)
+		end)
+	end
+
+	-- Nút DASH (có debounce)
+	if self.BTN_Dash:IsA("ImageButton") then
+		self.BTN_Dash.MouseButton1Click:Connect(function()
+			if canDash then
+				canDash = false
+				Client.Player_Action.Fire("DASH", true)
+				task.delay(dashCooldown, function()
+					canDash = true
+				end)
+			end
+		end)
+	end
+
+	-- Nút SKILL
+	if self.BTN_Skill:IsA("ImageButton") then
+		self.BTN_Skill.MouseButton1Click:Connect(function()
+			Client.Player_Action.Fire("SKILL", true)
 		end)
 	end
 

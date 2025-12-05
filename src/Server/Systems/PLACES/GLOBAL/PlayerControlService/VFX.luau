@@ -17,7 +17,7 @@ function Class.new(): VFX
 end
 
 function Class.PlayVFX(character, duration)
-	local weapon = character.RightHand.Cube.Cube056.Attachment1.Trail
+	local weapon = character.RightHand.Weapon.Weapon.Attachment1.Trail
 
 	if weapon:IsA("Trail") then
 		weapon.Enabled = true

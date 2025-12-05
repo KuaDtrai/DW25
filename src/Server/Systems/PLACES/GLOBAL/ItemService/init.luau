@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local Health = require(script.Health)
 local Mana = require(script.Mana)
+local Speed = require(script.Speed)
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
@@ -22,6 +23,7 @@ function init:_Setup()
 	-- Populate Items with all objects tagged "ITEMS"
 	self.Health = Health.new()
 	self.Mana = Mana.new()
+	self.Speed = Speed.new()
 
 	self.Items = CollectionService:GetTagged("ITEMS")
 
@@ -53,7 +55,10 @@ function init:_Start()
 			if part:HasTag("HEALTH") then
 				self.Health.OnUse(part, player)
 			elseif part:HasTag("MANA") then
-				self.MANA.OnUse(part, player)
+				self.Mana.OnUse(part, player)
+			elseif part:HasTag("SPEED") then
+				warn(part)
+				self.Speed.OnUse(part, player)
 			end
 		end
 	end

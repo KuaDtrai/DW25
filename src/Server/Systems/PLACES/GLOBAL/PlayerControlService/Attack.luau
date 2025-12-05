@@ -18,13 +18,50 @@ export type Attack = {
 local Class: Attack = {}
 Class.__index = Class
 
-local playerComboData: { [Player]: any } = {}
+-- Key theo UserId để không bị memory leak
+local playerComboData: { [number]: any } = {}
+
+local function getComboData(player: Player)
+	local id = player.UserId
+	if not playerComboData[id] then
+		playerComboData[id] = {
+			ComboIndex = 0,
+			IsAnimating = false,
+			NextComboQueued = false,
+			CurrentTrack = nil,
+			CurrentComboWindow = 0,
+			ResetTimer = nil,
+			IsOnCooldown = false,
+
+			OrigWalkSpeed = nil,
+			OrigJumpPower = nil,
+			OrigJumpHeight = nil,
+
+			Animator = nil,
+		}
+	end
+	return playerComboData[id]
+end
+
+Players.PlayerRemoving:Connect(function(player)
+	local id = player.UserId
+	local data = playerComboData[id]
+	if data then
+		if data.ResetTimer then
+			task.cancel(data.ResetTimer)
+		end
+		if data.CurrentTrack then
+			data.CurrentTrack:Stop()
+		end
+		playerComboData[id] = nil
+	end
+end)
 
 function Class.new(): Attack
 	local self: Attack = setmetatable({}, Class)
 	self.VFX = VFX.new()
-	self.ComboResetTime = 1
-	self.HitboxVisible = true
+	self.ComboResetTime = 1.5
+	self.HitboxVisible = false
 	self.ComboAnims = {
 		CONSTANTS:getAnimation("COMBO1"),
 		CONSTANTS:getAnimation("COMBO2"),
@@ -33,8 +70,8 @@ function Class.new(): Attack
 	return self
 end
 
-function Class:onAttack(Player: Player)
-	local character = Player.Character
+function Class:onAttack(player: Player)
+	local character = player.Character
 	if not character then
 		return
 	end
@@ -45,19 +82,7 @@ function Class:onAttack(Player: Player)
 		return
 	end
 
-	if not playerComboData[Player] then
-		playerComboData[Player] = {
-			ComboIndex = 0,
-			IsAnimating = false,
-			NextComboQueued = false,
-			CurrentTrack = nil,
-			CurrentComboWindow = 0,
-			ResetTimer = nil,
-			IsOnCooldown = false,
-		}
-	end
-
-	local comboData = playerComboData[Player]
+	local comboData = getComboData(player)
 
 	if comboData.IsOnCooldown then
 		return
@@ -75,12 +100,12 @@ function Class:onAttack(Player: Player)
 
 	if not comboData.IsAnimating then
 		comboData.ComboIndex = (comboData.ComboIndex % #self.ComboAnims) + 1
-		self:executeAttack(Player, comboData)
+		self:executeAttack(player, comboData)
 	end
 end
 
-function Class:executeAttack(Player: Player, comboData: any)
-	local character = Player.Character
+function Class:executeAttack(player: Player, comboData: any)
+	local character = player.Character
 	if not character then
 		return
 	end
@@ -94,18 +119,32 @@ function Class:executeAttack(Player: Player, comboData: any)
 	local comboIndex = comboData.ComboIndex
 	local animId = self.ComboAnims[comboIndex]
 
+	-- State
 	comboData.IsAnimating = true
 	comboData.NextComboQueued = false
 
-	Player:SetAttribute("Combo", comboIndex)
-	Player:SetAttribute("IsAttacking", true)
+	player:SetAttribute("Combo", comboIndex)
+	player:SetAttribute("IsAttacking", true)
 
-	-- ✅ BUỘC ĐỨNG IM - DISABLE WALK
+	-- Save movement state
+	if comboData.OrigWalkSpeed == nil then
+		comboData.OrigWalkSpeed = humanoid.WalkSpeed
+		comboData.OrigJumpPower = humanoid.JumpPower
+		comboData.OrigJumpHeight = humanoid.JumpHeight
+	end
+
+	-- Freeze
 	humanoid.WalkSpeed = 0
 	humanoid.JumpPower = 0
 	humanoid.JumpHeight = 0
 
-	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+	-- Animator
+	local animator = comboData.Animator
+	if not animator then
+		animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+		comboData.Animator = animator
+	end
+
 	local anim = Instance.new("Animation")
 	anim.AnimationId = animId
 	local track = animator:LoadAnimation(anim)
@@ -113,69 +152,72 @@ function Class:executeAttack(Player: Player, comboData: any)
 	track.Looped = false
 	comboData.CurrentTrack = track
 
-	self.VFX.PlayVFX(character, track.Length)
 	track:Play()
 
-	if comboIndex == 3 then
-		track:AdjustSpeed(2)
-	else
-		track:AdjustSpeed(1.5)
+	-- Wait track length loaded
+	local t = 0
+	while track.Length == 0 and t < 0.4 do
+		task.wait(0.03)
+		t += 0.03
 	end
 
-	local actualLength = track.Length / track.Speed
-	local dynamicWindow = math.max(actualLength * 0.5, 0.1)
+	-- Speed
+	-- if comboIndex == 3 then
+	-- 	track:AdjustSpeed(2)
+	-- else
+	-- track:AdjustSpeed(1.5)
+	-- end
 
-	comboData.CurrentComboWindow = dynamicWindow
+	local actualLength = math.max(track.Length / track.Speed, 0.2)
+	local comboWindow = math.max(actualLength * 0.5, 0.1)
+	comboData.CurrentComboWindow = comboWindow
 
-	warn(
-		string.format(
-			"Combo %d | Origin: %.3f | Speed: %.1f | Actual: %.3f | Window: %.3f",
-			comboIndex,
-			track.Length,
-			track.Speed,
-			actualLength,
-			dynamicWindow
-		)
-	)
+	self.VFX.PlayVFX(character, actualLength)
 
-	local hitTime = math.clamp(actualLength * 0.4, 0.1, 1)
-	self:spawnArcHitbox(character, hitTime)
+	-- Hitbox timing
+	local hitDelay = math.clamp(actualLength * 0.4, 0.1, 1)
+	task.delay(hitDelay, function()
+		self:spawnArcHitbox(character, 0.15)
+	end)
 
+	-- End animation
 	task.delay(actualLength, function()
-		if not character or not character.Parent then
+		if not player.Parent then
 			return
 		end
 
-		-- ✅ MỞ KHÓA DI CHUYỂN
-		humanoid.WalkSpeed = 16
-		humanoid.JumpPower = 50
-		humanoid.JumpHeight = 7.2
+		-- Restore movement
+		humanoid.WalkSpeed = comboData.OrigWalkSpeed
+		humanoid.JumpPower = comboData.OrigJumpPower
+		humanoid.JumpHeight = comboData.OrigJumpHeight
 
+		-- Reset state
 		comboData.CurrentTrack = nil
 		comboData.IsAnimating = false
-		Player:SetAttribute("IsAttacking", false)
+		player:SetAttribute("IsAttacking", false)
 
+		-- Next combo queued
 		if comboData.NextComboQueued then
 			comboData.ComboIndex = (comboData.ComboIndex % #self.ComboAnims) + 1
-			self:executeAttack(Player, comboData)
+			self:executeAttack(player, comboData)
 			return
-		else
-			comboData.ResetTimer = task.delay(dynamicWindow, function()
-				if Player.Parent then
-					comboData.ComboIndex = 0
-					Player:SetAttribute("Combo", 0)
-				end
-			end)
 		end
 
+		-- Reset combo after window
+		comboData.ResetTimer = task.delay(comboWindow, function()
+			if player.Parent then
+				comboData.ComboIndex = 0
+				player:SetAttribute("Combo", 0)
+			end
+		end)
+
+		-- Cooldown on final hit
 		if comboIndex == 3 then
 			comboData.IsOnCooldown = true
 			task.delay(self.ComboResetTime, function()
-				if Player.Parent then
-					comboData.IsOnCooldown = false
-					comboData.ComboIndex = 0
-					Player:SetAttribute("Combo", 0)
-				end
+				comboData.IsOnCooldown = false
+				comboData.ComboIndex = 0
+				player:SetAttribute("Combo", 0)
 			end)
 		end
 	end)
@@ -190,12 +232,15 @@ function Class:spawnArcHitbox(character: Model, activeTime: number)
 	end
 
 	local part = Instance.new("Part")
-	part.Name = "aisarwinning_" .. HttpService:GenerateGUID(false)
-	part.Size = Vector3.new(10, 10, 5)
-	part.CFrame = hrp.CFrame * CFrame.new(0, 0, -7.5)
+	part.Name = "Hitbox_" .. HttpService:GenerateGUID(false)
+	part.Size = Vector3.new(10, 10, 10)
+	part.CFrame = hrp.CFrame * CFrame.new(0, 0, -6)
 	part.CanCollide = false
 	part.Anchored = true
-	part.Parent = character
+
+	-- ❗ Không parent vào character
+	part.Parent = workspace
+
 	CollectionService:AddTag(part, "HITBOX")
 
 	local ownerValue = Instance.new("ObjectValue")
@@ -203,38 +248,30 @@ function Class:spawnArcHitbox(character: Model, activeTime: number)
 	ownerValue.Value = Players:GetPlayerFromCharacter(character)
 	ownerValue.Parent = part
 
-	if self.HitboxVisible then
+	if not self.HitboxVisible then
 		part.Transparency = 1
-		part.Color = Color3.fromRGB(17, 17, 17)
 	end
 
 	Debris:AddItem(part, activeTime)
 end
 
-function Class:resetComboForPlayer(Player: Player)
-	local comboData = playerComboData[Player]
-	if comboData then
-		if comboData.ResetTimer then
-			task.cancel(comboData.ResetTimer)
-		end
-		comboData.ComboIndex = 0
-		comboData.IsAnimating = false
-		comboData.NextComboQueued = false
-		comboData.IsOnCooldown = false
-		comboData.CurrentTrack = nil
-		comboData.CurrentComboWindow = 0
+function Class:resetComboForPlayer(player: Player)
+	local data = playerComboData[player.UserId]
+	if not data then
+		return
 	end
-	Player:SetAttribute("Combo", 0)
-	Player:SetAttribute("IsAttacking", false)
-end
 
-function Class:Destroy()
-	for _, data in pairs(playerComboData) do
-		if data.ResetTimer then
-			task.cancel(data.ResetTimer)
-		end
+	if data.ResetTimer then
+		task.cancel(data.ResetTimer)
 	end
-	playerComboData = {}
+
+	data.ComboIndex = 0
+	data.IsAnimating = false
+	data.NextComboQueued = false
+	data.IsOnCooldown = false
+
+	player:SetAttribute("Combo", 0)
+	player:SetAttribute("IsAttacking", false)
 end
 
 return Class
