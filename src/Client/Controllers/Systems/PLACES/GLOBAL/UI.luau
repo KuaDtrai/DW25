@@ -73,17 +73,6 @@ function Class.new(): UI
 		end)
 	end
 
-	-- Nút DEF
-	if self.BTN_Def:IsA("ImageButton") then
-		self.BTN_Def.MouseButton1Down:Connect(function()
-			Client.Player_Action.Fire("BLOCK", true)
-		end)
-
-		self.BTN_Def.MouseButton1Up:Connect(function()
-			Client.Player_Action.Fire("BLOCK", false)
-		end)
-	end
-
 	-- Nút DASH (có debounce)
 	if self.BTN_Dash:IsA("ImageButton") then
 		self.BTN_Dash.MouseButton1Click:Connect(function()

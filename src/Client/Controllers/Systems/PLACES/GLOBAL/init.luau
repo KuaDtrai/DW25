@@ -40,8 +40,6 @@ function init:_Start()
 
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			Client.Player_Action.Fire("ATTACK", true)
-		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-			Client.Player_Action.Fire("BLOCK", true)
 		elseif input.KeyCode == Enum.KeyCode.Q then
 			if canDash then
 				canDash = false
@@ -52,16 +50,6 @@ function init:_Start()
 			end
 		elseif input.KeyCode == Enum.KeyCode.E then
 			Client.Player_Action.Fire("SKILL", true)
-		end
-	end)
-
-	UserInputService.InputEnded:Connect(function(input, gameProcessedEvent)
-		if gameProcessedEvent then
-			return
-		end
-
-		if input.UserInputType == Enum.UserInputType.MouseButton2 then
-			Client.Player_Action.Fire("BLOCK", false)
 		end
 	end)
 end

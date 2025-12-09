@@ -4,7 +4,6 @@ local Players = game:GetService("Players")
 
 local Dash = require(script.Dash)
 local Attack = require(script.Attack)
-local Block = require(script.Block)
 local Skill = require(script.Skill)
 
 local Server = require(ReplicatedStorage.Shared.Network.Server)
@@ -23,7 +22,6 @@ local init = {
 function init:_Setup()
 	self.Dash = Dash.new()
 	self.Attack = Attack.new()
-	self.Block = Block.new()
 	self.Skill = Skill.new(self.Attack)
 end
 
@@ -42,8 +40,6 @@ function init:_Start()
 
 		if Action == "ATTACK" then
 			self.Attack:onAttack(Player)
-		elseif Action == "BLOCK" then
-			self.Block:onBlock(Player, State)
 		elseif Action == "DASH" then
 			self.Dash:onDash(Player)
 		elseif Action == "SKILL" then

@@ -18,29 +18,27 @@ local WeaponPickupSystem = {
 
 local TAG = "WEAPON_PROMPT"
 
--- CFrame gắn vũ khí (tùy chỉnh theo model của bạn)
 local WEAPON_CFRAME = CFrame.Angles(math.rad(-90), math.rad(90), 0)
 
 local function pickupWeapon(prompt: ProximityPrompt, player: Player)
 	local character = player.Character
-	if not character or not character.Parent then
+	if not character then
 		return
 	end
 
 	local rightHand = character:FindFirstChild("RightHand")
 	if not rightHand then
-		warn("[WeaponPickup] Không tìm thấy RightHand của", player.Name)
+		warn("Không tìm thấy RightHand!")
 		return
 	end
 
-	-- Lấy Handle (phần chứa prompt)
+	-- handle = BasePart chứa prompt
 	local handle = prompt.Parent
 	if not handle or not handle:IsA("BasePart") then
-		warn("[WeaponPickup] Prompt không có BasePart cha!")
 		return
 	end
 
-	-- Tìm Model cha của vũ khí (nếu có)
+	-- tìm model vũ khí
 	local weaponRoot = handle
 	repeat
 		if weaponRoot:IsA("Model") then
@@ -53,13 +51,48 @@ local function pickupWeapon(prompt: ProximityPrompt, player: Player)
 		weaponRoot = handle
 	end
 
-	-- Bước 1: Xóa vũ khí cũ tên "Weapon" trong tay (nếu có)
+	------------------------------------------------------------------
+	-- 🔥 DROP VŨ KHÍ CŨ
+	------------------------------------------------------------------
 	local oldWeapon = rightHand:FindFirstChild("Weapon")
 	if oldWeapon then
-		oldWeapon:Destroy()
+		local oldMotor = rightHand:FindFirstChild("WeaponGrip")
+		if oldMotor then
+			oldMotor:Destroy()
+		end
+
+		-- đưa ra workspace
+		oldWeapon.Parent = workspace
+
+		for _, part in ipairs(oldWeapon:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Anchored = false
+				part.CanCollide = true
+			end
+		end
+
+		-- đặt vị trí rớt xuống dưới tay
+		local dropPos = rightHand.Position - Vector3.new(0, 1, 0)
+		if oldWeapon:IsA("Model") and oldWeapon.PrimaryPart then
+			oldWeapon:SetPrimaryPartCFrame(CFrame.new(dropPos))
+		elseif oldWeapon:IsA("BasePart") then
+			oldWeapon.Position = dropPos
+		end
+
+		-- Gắn prompt để nhặt lại
+		local newPrompt = Instance.new("ProximityPrompt")
+		newPrompt.Name = "PickupPrompt"
+		newPrompt.ActionText = "Nhặt"
+		newPrompt.ObjectText = "Vũ khí"
+		newPrompt.MaxActivationDistance = 8
+		newPrompt.Parent = oldWeapon:FindFirstChildWhichIsA("BasePart") or oldWeapon
+
+		CollectionService:AddTag(newPrompt, TAG)
 	end
 
-	-- Bước 2: Tắt Anchored + CanCollide của tất cả BasePart trong vũ khí
+	------------------------------------------------------------------
+	-- 🔥 EQUIP VŨ KHÍ MỚI
+	------------------------------------------------------------------
 	for _, part in ipairs(weaponRoot:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.Anchored = false
@@ -67,28 +100,23 @@ local function pickupWeapon(prompt: ProximityPrompt, player: Player)
 		end
 	end
 
-	-- Bước 3: Đổi tên thành "Weapon"
 	weaponRoot.Name = "Weapon"
-
-	-- Bước 4: Di chuyển vào tay phải
 	weaponRoot.Parent = rightHand
 
-	-- Bước 5: Tạo Motor6D gắn Handle vào tay
 	local motor = Instance.new("Motor6D")
 	motor.Name = "WeaponGrip"
 	motor.Part0 = rightHand
 	motor.Part1 = handle
 	motor.C0 = WEAPON_CFRAME
-	motor.C1 = CFrame.new() -- giữ offset gốc của Handle
+	motor.C1 = CFrame.new()
 	motor.Parent = rightHand
 
-	-- Bước 6: Xóa prompt
 	prompt:Destroy()
 
-	print(`[WeaponPickup] {player.DisplayName} đã cầm vũ khí!`)
+	print(player.Name, "đã nhặt vũ khí")
 end
 
--- Thiết lập prompt
+-- setup prompt
 local function setupPrompt(prompt: Instance)
 	if not prompt:IsA("ProximityPrompt") then
 		return
@@ -100,17 +128,12 @@ local function setupPrompt(prompt: Instance)
 end
 
 function WeaponPickupSystem:_Start()
-	-- Xử lý tất cả prompt hiện có
 	for _, obj in CollectionService:GetTagged(TAG) do
 		setupPrompt(obj)
 	end
 
-	-- Tự động xử lý khi có prompt mới
 	CollectionService:GetInstanceAddedSignal(TAG):Connect(setupPrompt)
-
-	print(
-		"[WeaponPickupSystem] Đã khởi động – vũ khí sẽ được đổi tên thành 'Weapon' và gắn vào tay!"
-	)
+	print("[WeaponPickupSystem] Start")
 end
 
 function WeaponPickupSystem:_Setup() end
