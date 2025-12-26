@@ -5,7 +5,11 @@ local Player = Players.LocalPlayer
 local PlayerGUI = Player:WaitForChild("PlayerGui")
 -- local MainUIFrame = PlayerGUI:WaitForChild("MainUI").MainFrame
 local UserInputService = game:GetService("UserInputService")
-
+local Utilities = require(ReplicatedStorage.Shared.Modules.Utilities)
+local VFX_C1 = ReplicatedStorage.Shared.Assets.VFX.COMBO1
+local VFX_C2 = ReplicatedStorage.Shared.Assets.VFX.COMBO2
+local VFX_C3 = ReplicatedStorage.Shared.Assets.VFX.COMBO3
+local VFX_Hit = ReplicatedStorage.Shared.Assets.VFX.HIT
 local UI = require(script.UI)
 local Client = require(ReplicatedStorage.Shared.Network.Client)
 local Openday = require(ReplicatedStorage.Shared.Openday)
@@ -33,6 +37,18 @@ function init:_Setup()
 end
 
 function init:_Start()
+	Client.VFX_Signal.SetCallback(function(name, position)
+		if name == "COMBO1" then
+			Utilities.ParticleBurst(VFX_C1, position)
+		elseif name == "COMBO2" then
+			Utilities.ParticleBurst(VFX_C2, position)
+		elseif name == "COMBO3" then
+			Utilities.ParticleBurst(VFX_C3, position)
+		elseif name == "HIT" then
+			Utilities.ParticleBurst(VFX_Hit, position)
+		end
+	end)
+
 	UserInputService.InputBegan:Connect(function(input, gameProcessedEvent: boolean)
 		if gameProcessedEvent then
 			return

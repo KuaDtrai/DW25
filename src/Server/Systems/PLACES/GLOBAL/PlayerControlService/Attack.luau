@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Debris = game:GetService("Debris")
 local CollectionService = game:GetService("CollectionService")
+local Server = require(ReplicatedStorage.Shared.Network.Server)
 local HttpService = game:GetService("HttpService")
 local VFX = require(script.Parent.VFX)
 
@@ -94,8 +95,8 @@ end)
 ---------------------------------------------------------------------
 function Class.new(): Attack
 	local self: Attack = setmetatable({}, Class)
-	self.VFX = VFX.new()
-	self.ComboResetTime = 1.5
+	-- self.VFX = VFX.new()
+	self.ComboResetTime = 1
 	self.HitboxVisible = false
 	self.ComboAnims = {
 		CONSTANTS:getAnimation("COMBO1"),
@@ -176,9 +177,9 @@ function Class:executeAttack(player: Player, comboData: any)
 		comboData.OrigJumpHeight = humanoid.JumpHeight
 	end
 
-	humanoid.WalkSpeed = 0
-	humanoid.JumpPower = 0
-	humanoid.JumpHeight = 0
+	humanoid.WalkSpeed = 5
+	humanoid.JumpPower = 5
+	humanoid.JumpHeight = 5
 
 	---------------------------------------------------------------------
 	-- 🎬 LẤY ANIMATOR (fix respwan)
@@ -197,8 +198,8 @@ function Class:executeAttack(player: Player, comboData: any)
 	track.Priority = Enum.AnimationPriority.Action
 	track.Looped = false
 	comboData.CurrentTrack = track
-
 	track:Play()
+	track:AdjustSpeed(1.5)
 
 	---------------------------------------------------------------------
 	-- CHỜ animation load length
@@ -213,7 +214,7 @@ function Class:executeAttack(player: Player, comboData: any)
 	local comboWindow = math.max(actualLength * 0.5, 0.1)
 	comboData.CurrentComboWindow = comboWindow
 
-	self.VFX.PlayVFX(character, actualLength)
+	-- self.VFX.PlayVFX(character, actualLength)
 
 	---------------------------------------------------------------------
 	-- HITBOX TIMING
@@ -221,6 +222,13 @@ function Class:executeAttack(player: Player, comboData: any)
 	local hitDelay = math.clamp(actualLength * 0.4, 0.1, 1)
 	task.delay(hitDelay, function()
 		self:spawnArcHitbox(character, 0.15)
+		if comboIndex == 1 then
+			Server.VFX_Signal.FireAll("COMBO1", hrp.CFrame)
+		elseif comboIndex == 2 then
+			Server.VFX_Signal.FireAll("COMBO2", hrp.CFrame)
+		elseif comboIndex == 3 then
+			Server.VFX_Signal.FireAll("COMBO3", hrp.CFrame)
+		end
 	end)
 
 	---------------------------------------------------------------------

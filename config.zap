@@ -14,6 +14,17 @@ event MatchMaking = {
     data: boolean,
 }
 
+--VFX Signal--
+event VFX_Signal = {
+    from: Server,
+    type: Reliable,
+    call: SingleAsync,
+    data: (
+        Name: enum{COMBO1, COMBO2, COMBO3, HIT},
+        Position: CFrame,
+    ),
+}
+
 event TeleportToCampaign = {
     from: Client,
     type: Reliable,
