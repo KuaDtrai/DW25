@@ -30,27 +30,17 @@ local Constants = {
 		RUN = "Run",
 	},
 
-	COLLECTABLE_TAG = "COLLECTED_ITEM",
-	FLYING_TAG = "Flying_Dino",
+	CREEP_ANIMATION = {
+		ATTACK = 123456789012345,
+		WALK = "CreepWalk",
+		PATROL = 107845687712183,
+		DEAD = "CreepDead",
+	},
 
 	IS_RANDOM_SPAWN = is_random_spawn,
 
-	ATTACK = "Attack",
-	CONSUME = "Consume",
-	ITEM_TYPE = {
-		WEAPON = "Weapons",
-		CONSUMABLE = "Consumables",
-		FUSE = "Fuse",
-	},
 	BULLET_GRAVITY_AFFECT = 10,
 	VISUAL_STORAGE = "",
-
-	COLLISION_GROUPS = {
-		COLLECTABLES = "COLLECTABLES",
-		PLAYER = "PLAYER",
-	},
-
-	WILD_DINOSAUR_TAG = "WILD_DINO",
 
 	getPlaceId = function(self, placeName)
 		local placeId = rawget(self.PLACE_ID, placeName)

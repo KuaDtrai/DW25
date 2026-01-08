@@ -178,6 +178,7 @@ function Class:executeAttack(player: Player, comboData: any)
 	end
 
 	humanoid.WalkSpeed = 5
+	humanoid.AutoRotate = false
 	humanoid.JumpPower = 5
 	humanoid.JumpHeight = 5
 
@@ -241,6 +242,7 @@ function Class:executeAttack(player: Player, comboData: any)
 
 		humanoid.WalkSpeed = comboData.OrigWalkSpeed
 		humanoid.JumpPower = comboData.OrigJumpPower
+		humanoid.AutoRotate = true
 		humanoid.JumpHeight = comboData.OrigJumpHeight
 
 		comboData.CurrentTrack = nil
@@ -293,7 +295,7 @@ function Class:spawnArcHitbox(character: Model, activeTime: number)
 	part.Parent = workspace
 
 	CollectionService:AddTag(part, "HITBOX")
-
+	part:SetAttribute("Damage", character:GetAttribute("Damage"))
 	local ownerValue = Instance.new("ObjectValue")
 	ownerValue.Name = "Owner"
 	ownerValue.Value = Players:GetPlayerFromCharacter(character)

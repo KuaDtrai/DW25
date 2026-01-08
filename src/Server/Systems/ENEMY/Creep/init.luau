@@ -1,14 +1,15 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local CollectionService = game:GetService("CollectionService")
 
-local SpawnModule = require(script.Parent.Modules.Spawn)
-local PatrolModule = require(script.Parent.Modules.Patrol)
-local TargetModule = require(script.Parent.Modules.Target)
-local AttackModule = require(script.Parent.Modules.Attack)
+local Spawn = require(script.Parent.Modules.Spawn)
+local Patrol = require(script.Parent.Modules.Patrol)
+local Target = require(script.Parent.Modules.Target)
+local Offensive = require(script.Parent.Modules.Offensive)
+local Death = require(script.Parent.Modules.Death)
+local Animation = require(script.Parent.Modules.Animation)
 
-local CreepModel = ReplicatedStorage.:WaitForChild("Creep")
+local CreepModel = ReplicatedStorage.Shared.Assets.NPC:WaitForChild("Creep")
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
@@ -22,8 +23,51 @@ local init = {
 	_Extensions = {},
 } :: System
 
-function init:_Setup() end
+function init:_Setup()
+	self.spawnSystem = Spawn.new()
 
-function init:_Start() end
+	self.patrolSystem = Patrol.new()
+	self.offensiveSystem = Offensive.new()
+
+	self.Creeps = {}
+
+	CollectionService:GetInstanceAddedSignal("Creep"):Connect(function(instance)
+		if not instance:IsA("Model") then
+			return
+		end
+		Death.new(instance)
+		Target.new(instance)
+		Animation.new(instance)
+		instance:GetAttributeChangedSignal("State"):Connect(function()
+			init.update(instance)
+		end)
+		table.insert(self.Creeps, instance)
+	end)
+
+	CollectionService:GetInstanceRemovedSignal("Creep"):Connect(function(instance)
+		for index, value in ipairs(self.Creeps) do
+			if value == instance then
+				table.remove(self.Creeps, index)
+				break
+			end
+		end
+	end)
+end
+
+function init.update(instance: Model)
+	local state = instance:GetAttribute("State")
+	if state == "None" or state == "Idle" then
+		init.patrolSystem:DoPatrol(instance)
+	elseif state == "Sight" or state == "Approach" or state == "Attack" then
+		init.offensiveSystem:DoOffensive(instance)
+	else
+		-- None state
+	end
+end
+
+function init:_Start()
+	-- Spawn model Creep
+	self.spawnSystem:Spawn("CREEP_SPAWNER", CreepModel)
+end
 
 return init

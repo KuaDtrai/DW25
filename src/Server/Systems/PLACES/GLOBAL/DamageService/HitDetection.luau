@@ -47,7 +47,10 @@ function Class.new(): HitDetection
 				return
 			end
 
-			self:ApplyDamage(hitHumanoid)
+			local damage = hitbox:GetAttribute("Damage") :: number
+			if hitHumanoid and hitHumanoid.Health > 0 then
+				hitHumanoid:TakeDamage(damage)
+			end
 			Server.VFX_Signal.FireAll("HIT", otherPart.CFrame)
 		end)
 	end)
@@ -64,12 +67,6 @@ function Class:getAllHitboxes()
 			warn("New hitbox added", hitbox)
 		end)
 	end)
-end
-
-function Class:ApplyDamage(humanoid: Humanoid)
-	if humanoid and humanoid.Health > 0 then
-		humanoid:TakeDamage(DAMAGE)
-	end
 end
 
 function Class:Destroy() end

@@ -22,7 +22,7 @@ local init = {
 function init:_Setup()
 	self.Dash = Dash.new()
 	self.Attack = Attack.new()
-	self.Skill = Skill.new(self.Attack)
+	self.Skill = Skill.new()
 end
 
 function init:_Start()
