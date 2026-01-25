@@ -3,6 +3,10 @@
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local pickupCooldown = {}
+local PICKUP_DELAY = 0.5
+
+local WeaponAssets = ReplicatedStorage.Shared.Assets.Weapon
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
@@ -16,11 +20,32 @@ local WeaponPickupSystem = {
 	_Extensions = {},
 } :: System
 
-local TAG = "WEAPON_PROMPT"
+local TAG = "WEAPON_PODIUM"
 
 local WEAPON_CFRAME = CFrame.Angles(math.rad(-90), math.rad(90), 0)
 
+local function getWeaponType(pickupModel: Instance): string?
+	if pickupModel:HasTag("WEAPON_SWORD") then
+		return "SWORD"
+	elseif pickupModel:HasTag("WEAPON_LANCE") then
+		return "LANCE"
+	elseif pickupModel:HasTag("WEAPON_GREATSWORD") then
+		return "GREATSWORD"
+	end
+	return nil
+end
+
 local function pickupWeapon(prompt: ProximityPrompt, player: Player)
+	local uid = player.UserId
+	if pickupCooldown[uid] then
+		return
+	end
+
+	pickupCooldown[uid] = true
+	task.delay(PICKUP_DELAY, function()
+		pickupCooldown[uid] = nil
+	end)
+
 	local character = player.Character
 	if not character then
 		return
@@ -32,40 +57,25 @@ local function pickupWeapon(prompt: ProximityPrompt, player: Player)
 		return
 	end
 
-	-- handle = BasePart chứa prompt
 	local handle = prompt.Parent
 	if not handle or not handle:IsA("BasePart") then
 		return
 	end
 
-	warn(handle.Name .. " được nhặt bởi " .. player.Name)
+	-- tìm model pickup
+	local pickupModel = handle:FindFirstAncestorWhichIsA("Model") or handle
 
-	-- tìm model vũ khí
-	local weaponRoot = handle
-	repeat
-		if weaponRoot:IsA("Model") then
-			break
-		end
-		weaponRoot = weaponRoot.Parent
-	until not weaponRoot or not weaponRoot.Parent
-
-	if not weaponRoot then
-		weaponRoot = handle
+	----------------------------------------------------
+	-- XÁC ĐỊNH LOẠI VŨ KHÍ
+	----------------------------------------------------
+	local weaponType = getWeaponType(pickupModel)
+	if weaponType then
+		character:SetAttribute("EquippedWeapon", weaponType)
 	end
 
-	if handle.Parent:IsA("Model") then
-		if handle.Parent:HasTag("WEAPON_SWORD") then
-			character:SetAttribute("EquippedWeapon", "SWORD")
-		elseif handle.Parent:HasTag("WEAPON_LANCE") then
-			character:SetAttribute("EquippedWeapon", "LANCE")
-		elseif handle.Parent:HasTag("WEAPON_GREATSWORD") then
-			character:SetAttribute("EquippedWeapon", "GREATSWORD")
-		end
-	end
-
-	------------------------------------------------------------------
+	----------------------------------------------------
 	-- 🔥 DROP VŨ KHÍ CŨ
-	------------------------------------------------------------------
+	----------------------------------------------------
 	local oldWeapon = rightHand:FindFirstChild("Weapon")
 	if oldWeapon then
 		local oldMotor = rightHand:FindFirstChild("WeaponGrip")
@@ -73,7 +83,6 @@ local function pickupWeapon(prompt: ProximityPrompt, player: Player)
 			oldMotor:Destroy()
 		end
 
-		-- đưa ra workspace
 		oldWeapon.Parent = workspace
 
 		for _, part in ipairs(oldWeapon:GetDescendants()) do
@@ -83,49 +92,55 @@ local function pickupWeapon(prompt: ProximityPrompt, player: Player)
 			end
 		end
 
-		-- đặt vị trí rớt xuống dưới tay
 		local dropPos = rightHand.Position - Vector3.new(0, 1, 0)
 		if oldWeapon:IsA("Model") and oldWeapon.PrimaryPart then
 			oldWeapon:SetPrimaryPartCFrame(CFrame.new(dropPos))
-		elseif oldWeapon:IsA("BasePart") then
-			oldWeapon.Position = dropPos
 		end
-
-		-- Gắn prompt để nhặt lại
-		local newPrompt = Instance.new("ProximityPrompt")
-		newPrompt.Name = "PickupPrompt"
-		newPrompt.ActionText = "Nhặt"
-		newPrompt.ObjectText = "Vũ khí"
-		newPrompt.MaxActivationDistance = 8
-		newPrompt.Parent = oldWeapon:FindFirstChildWhichIsA("BasePart") or oldWeapon
-
-		CollectionService:AddTag(newPrompt, TAG)
 	end
 
-	------------------------------------------------------------------
-	-- 🔥 EQUIP VŨ KHÍ MỚI
-	------------------------------------------------------------------
-	for _, part in ipairs(weaponRoot:GetDescendants()) do
+	----------------------------------------------------
+	-- 🔥 CLONE VŨ KHÍ MỚI TỪ REPLICATEDSTORAGE
+	----------------------------------------------------
+	local weaponTemplate = WeaponAssets:FindFirstChild("Weapon")
+	if not weaponTemplate then
+		warn("Không tìm thấy Weapon asset!")
+		return
+	end
+
+	local newWeapon = weaponTemplate:Clone()
+	newWeapon.Name = "Weapon"
+	newWeapon.Parent = rightHand
+
+	for _, part in ipairs(newWeapon:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.Anchored = false
 			part.CanCollide = false
 		end
+		if part:IsA("ProximityPrompt") then
+			part:Destroy()
+		end
 	end
 
-	weaponRoot.Name = "Weapon"
-	weaponRoot.Parent = rightHand
+	----------------------------------------------------
+	-- GẮN VÀO TAY
+	----------------------------------------------------
+	local weaponHandle = newWeapon.PrimaryPart or newWeapon:FindFirstChildWhichIsA("BasePart")
+
+	if not weaponHandle then
+		warn("Weapon không có BasePart!")
+		newWeapon:Destroy()
+		return
+	end
 
 	local motor = Instance.new("Motor6D")
 	motor.Name = "WeaponGrip"
 	motor.Part0 = rightHand
-	motor.Part1 = handle
+	motor.Part1 = weaponHandle
 	motor.C0 = WEAPON_CFRAME
 	motor.C1 = CFrame.new()
 	motor.Parent = rightHand
 
-	prompt:Destroy()
-
-	print(player.Name, "đã nhặt vũ khí")
+	print(player.Name, "đã nhặt vũ khí", weaponType or "")
 end
 
 -- setup prompt

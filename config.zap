@@ -49,6 +49,12 @@ event Dash = {
     call: SingleAsync,
 }
 
+event CancelLockControl = {
+    from: Server,
+    type: Reliable,
+    call: SingleAsync,
+}
+
 event Attack = {
     from: Client,
     type: Reliable,

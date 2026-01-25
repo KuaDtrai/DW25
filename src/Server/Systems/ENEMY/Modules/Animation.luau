@@ -41,7 +41,7 @@ function Class.new(npcModel: Model): AnimationController
 
 	-- Listen OnStop
 	self._stopConn = npcModel:GetAttributeChangedSignal("IsStop"):Connect(function()
-		warn("OnStop changed")
+		-- warn("OnStop changed")
 		self:_onStopChanged()
 	end)
 
@@ -100,7 +100,7 @@ end
 
 function Class:_playStop()
 	self:_stopAll()
-	warn("Playing Stop Animation")
+	-- warn("Playing Stop Animation")
 	local animId = self.npcModel:GetAttribute("Animation-Stop")
 	if typeof(animId) ~= "string" then
 		return

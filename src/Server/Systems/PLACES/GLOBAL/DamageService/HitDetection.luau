@@ -30,6 +30,10 @@ function Class.new(): HitDetection
 			local hitCharacter = otherPart.Parent
 			local hitPlayer = Players:GetPlayerFromCharacter(hitCharacter)
 
+			if hitPlayer and hitPlayer:GetAttribute("IsDashing") then
+				return
+			end
+
 			-- 🧠 Chủ sở hữu
 			local ownerValue = hitbox:FindFirstChild("Owner")
 			local ownerPlayer = ownerValue and ownerValue.Value

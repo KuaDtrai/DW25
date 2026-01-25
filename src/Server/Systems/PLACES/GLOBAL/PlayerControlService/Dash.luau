@@ -20,6 +20,8 @@ end
 function Class:onDash(player: Player)
 	local character = player.Character
 	if character and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart") then
+		character:SetAttribute("IsDashing", true)
+
 		local humanoid = character.Humanoid
 		local humanoidRootPart = character.HumanoidRootPart
 		local moveDirection = humanoid.MoveDirection
@@ -27,11 +29,11 @@ function Class:onDash(player: Player)
 			moveDirection = humanoidRootPart.CFrame.LookVector
 		end
 
-		local animationId = CONSTANTS:getAnimation("DASH")
-		if animationId == "" then
-			warn("No AnimationId found for DASH")
-			return
-		end
+		-- local animationId = CONSTANTS:getAnimation("DASH")
+		-- if animationId == "" then
+		-- 	warn("No AnimationId found for DASH")
+		-- 	return
+		-- end
 
 		-- Áp dụng lực lướt
 		local dashSpeed = 75 -- Tốc độ lướt (có thể điều chỉnh)
@@ -45,12 +47,12 @@ function Class:onDash(player: Player)
 		game.Debris:AddItem(bodyVelocity, dashDuration)
 
 		-- Tải và chạy animation
-		local animation = Instance.new("Animation")
-		animation.AnimationId = animationId
-		local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-		local animationTrack = animator:LoadAnimation(animation)
-		warn(animationTrack)
-		animationTrack:Play()
+		-- local animation = Instance.new("Animation")
+		-- animation.AnimationId = animationId
+		-- local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+		-- local animationTrack = animator:LoadAnimation(animation)
+		-- warn(animationTrack)
+		-- animationTrack:Play()
 		-- end
 	end
 end

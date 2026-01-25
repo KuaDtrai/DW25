@@ -2,19 +2,23 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
-local PlayerGUI = Player:WaitForChild("PlayerGui")
--- local MainUIFrame = PlayerGUI:WaitForChild("MainUI").MainFrame
 local UserInputService = game:GetService("UserInputService")
+local MouseLock = require(script.MouseLock)
+local Player = Players.LocalPlayer
+local PlayerGUI = Player:WaitForChild("PlayerGui")
+
 local Utilities = require(ReplicatedStorage.Shared.Modules.Utilities)
+local Client = require(ReplicatedStorage.Shared.Network.Client)
+local Openday = require(ReplicatedStorage.Shared.Openday)
+
+local UI = require(script.UI)
+local GUI = require(script.GUI)
+local Minimap = require(script.Minimap)
+
 local VFX_C1 = ReplicatedStorage.Shared.Assets.VFX.COMBO1
 local VFX_C2 = ReplicatedStorage.Shared.Assets.VFX.COMBO2
 local VFX_C3 = ReplicatedStorage.Shared.Assets.VFX.COMBO3
 local VFX_Hit = ReplicatedStorage.Shared.Assets.VFX.HIT
-local UI = require(script.UI)
-local Client = require(ReplicatedStorage.Shared.Network.Client)
-local Openday = require(ReplicatedStorage.Shared.Openday)
-local GUI = require(script.GUI)
-local Minimap = require(script.Minimap)
 
 export type System = {
 	_Extensions: { Openday.Extension },
@@ -26,16 +30,21 @@ local init = {
 	_Extensions = {},
 } :: System
 
--- Biến debounce cho Dash
-local canDash = true
-local dashCooldown = 1
-
+----------------------------------------------------------------
+-- System Setup
+----------------------------------------------------------------
 function init:_Setup()
 	self.GUI = GUI.new()
 	self.Minimap = Minimap.new()
 	self.UI = UI.new()
+	self.MouseLock = MouseLock.new()
+
+	self.MouseLock:Enable()
 end
 
+----------------------------------------------------------------
+-- System Start
+----------------------------------------------------------------
 function init:_Start()
 	Client.VFX_Signal.SetCallback(function(name, position)
 		if name == "COMBO1" then
@@ -49,21 +58,26 @@ function init:_Start()
 		end
 	end)
 
-	UserInputService.InputBegan:Connect(function(input, gameProcessedEvent: boolean)
+	UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 		if gameProcessedEvent then
 			return
 		end
 
+		----------------------------------------------------------------
+		-- ATTACK
+		----------------------------------------------------------------
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			Client.Player_Action.Fire("ATTACK", true)
-		elseif input.KeyCode == Enum.KeyCode.Q then
-			if canDash then
-				canDash = false
-				Client.Player_Action.Fire("DASH", true)
-				task.delay(dashCooldown, function()
-					canDash = true
-				end)
+			if not Player.Character:GetAttribute("IsAttacking") then
+				Client.Player_Action.Fire("ATTACK", true)
 			end
+
+		----------------------------------------------------------------
+		-- DASH
+		----------------------------------------------------------------
+		elseif input.KeyCode == Enum.KeyCode.Q then
+		----------------------------------------------------------------
+		-- SKILL
+		----------------------------------------------------------------
 		elseif input.KeyCode == Enum.KeyCode.E then
 			Client.Player_Action.Fire("SKILL", true)
 		end

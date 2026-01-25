@@ -148,6 +148,9 @@ if not RunService:IsRunning() then
 		Dash = table.freeze({
 			Fire = noop
 		}),
+		CancelLockControl = table.freeze({
+			SetCallback = noop
+		}),
 		Block = table.freeze({
 			Fire = noop
 		}),
@@ -181,9 +184,10 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local reliable_events = table.create(1)
-local reliable_event_queue: { [number]: { any } } = table.create(1)
+local reliable_events = table.create(2)
+local reliable_event_queue: { [number]: { any } } = table.create(2)
 reliable_event_queue[0] = {}
+reliable_event_queue[1] = 0
 reliable.OnClientEvent:Connect(function(buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -218,6 +222,16 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 				table.insert(reliable_event_queue[0], { value, value2 })
 				if #reliable_event_queue[0] > 64 then
 					warn(`[ZAP] {#reliable_event_queue[0]} events in queue for VFX_Signal. Did you forget to attach a listener?`)
+				end
+			end
+		elseif id == 1 then
+			local value
+			if reliable_events[1] then
+				task.spawn(reliable_events[1], value)
+			else
+				reliable_event_queue[1] += 1
+				if reliable_event_queue[1] > 16 then
+					warn(`[ZAP] {reliable_event_queue[1]} events in queue for CancelLockControl. Did you forget to attach a listener?`)
 				end
 			end
 		else
@@ -309,6 +323,18 @@ local returns = {
 		Fire = function()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+		end,
+	},
+	CancelLockControl = {
+		SetCallback = function(Callback: () -> ()): () -> ()
+			reliable_events[1] = Callback
+			for _ = 1, reliable_event_queue[1] do
+				task.spawn(Callback)
+			end
+			reliable_event_queue[1] = 0
+			return function()
+				reliable_events[1] = nil
+			end
 		end,
 	},
 	Block = {
