@@ -15,11 +15,6 @@ function Class.new(): init
 	return self
 end
 
-function Class:onSkill()
-	self.Skill1:Cast()
-	self.Skill2:Cast()
-end
-
 function Class:Destroy() end
 
 return Class

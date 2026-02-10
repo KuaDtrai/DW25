@@ -1,129 +1,94 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local camera = Workspace.CurrentCamera
 
-local Player = Players.LocalPlayer
-local OtherPlayers = {}
 local PlayerGUIFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Assets")
 
 export type GUI = {
 	__index: GUI,
-	HealthGui: BillboardGui,
-	PowGui: BillboardGui,
-	NameGui: BillboardGui,
-	HealthBar: Frame,
-	PowBar: Frame,
 	Connections: { RBXScriptConnection },
 	new: () -> GUI,
 	AttachToCharacter: (self: GUI, character: Model) -> (),
-	UpdateHealth: (self: GUI, humanoid: Humanoid) -> (),
 	Destroy: (self: GUI) -> (),
 }
 
 local GUIClass = {} :: GUI
 GUIClass.__index = GUIClass
 
--- Khởi tạo GUI cho người chơi
+-- =======================
+-- Constructor
+-- =======================
 function GUIClass.new(): GUI
-	local self = setmetatable({} :: any, GUIClass)
-
-	local guiFolder = PlayerGUIFolder:WaitForChild("PlayerGUI")
-	local healthTemplate = guiFolder:WaitForChild("Health") :: BillboardGui
-	local powTemplate = guiFolder:WaitForChild("Pow") :: BillboardGui
-	local nameTemplate = guiFolder:WaitForChild("Playername") :: BillboardGui
-
-	self.HealthGui = healthTemplate:Clone()
-	self.HealthBar = self.HealthGui:WaitForChild("Frame") :: Frame
-
-	self.PowGui = powTemplate:Clone()
-	self.PowBar = self.PowGui:WaitForChild("Frame") :: Frame
-
-	self.NameGui = nameTemplate:Clone()
-
+	local self = setmetatable({}, GUIClass)
 	self.Connections = {}
 
-	-- Gắn GUI cho người chơi khác
-	for _, other in ipairs(Players:GetPlayers()) do
-		if other ~= Player and other.Character then
-			self:AttachToCharacter(other.Character)
+	warn(1)
+	-- Gắn cho tất cả player hiện tại (kể cả LocalPlayer)
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Character then
+			self:AttachToCharacter(player.Character)
 		end
 
 		table.insert(
 			self.Connections,
-			other.CharacterAdded:Connect(function(character)
-				if other ~= Player then
-					character:WaitForChild("Head")
-					self:AttachToCharacter(character)
-				end
+			player.CharacterAdded:Connect(function(character)
+				self:AttachToCharacter(character)
 			end)
 		)
 	end
 
-	-- Khi có người mới tham gia server
+	-- Player mới vào
 	table.insert(
 		self.Connections,
-		Players.PlayerAdded:Connect(function(other)
-			if other ~= Player then
-				other.CharacterAdded:Connect(function(character)
-					character:WaitForChild("Head")
-					self:AttachToCharacter(character)
-				end)
-			end
+		Players.PlayerAdded:Connect(function(player)
+			player.CharacterAdded:Connect(function(character)
+				self:AttachToCharacter(character)
+			end)
 		end)
 	)
 
 	return self
 end
 
--- Gắn GUI vào nhân vật
+-- =======================
+-- Attach GUI
+-- =======================
 function GUIClass:AttachToCharacter(character: Model)
-	if not character or not character:FindFirstChild("Head") then
-		character:WaitForChild("Head")
+	if character:FindFirstChild("PlayerBillboard") then
+		return -- tránh gắn trùng
 	end
 
-	local head = character:FindFirstChild("Head") or character:WaitForChild("Head")
-	local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid")
+	local head = character:WaitForChild("Head")
+	local humanoid = character:WaitForChild("Humanoid")
 	local owner = Players:GetPlayerFromCharacter(character)
 
-	-- Clone GUI mới cho từng nhân vật
-	local healthGui = self.HealthGui:Clone()
-	local powGui = self.PowGui:Clone()
-	local nameGui = self.NameGui:Clone()
+	local guiFolder = PlayerGUIFolder:WaitForChild("PlayerGUI")
+	local healthGui = guiFolder.Health:Clone()
+	local powGui = guiFolder.Pow:Clone()
+	local nameGui = guiFolder.Playername:Clone()
 
-	local healthBar = healthGui:WaitForChild("Frame") :: Frame
-	local powBar = powGui:WaitForChild("Frame") :: Frame
-	local nameLabel = nameGui:WaitForChild("NameLabel") :: TextLabel
+	-- Đánh dấu để không attach lại
+	local tag = Instance.new("Folder")
+	tag.Name = "PlayerBillboard"
+	tag.Parent = character
 
-	-- Gắn GUI vào đầu nhân vật
-	healthGui.Parent = head
-	powGui.Parent = head
-	nameGui.Parent = head
-
-	-- Hiển thị tên người chơi
-	if owner then
-		nameLabel.Text = owner.DisplayName or owner.Name
-	else
-		nameLabel.Text = character.Name
+	-- Cấu hình chung
+	for _, gui in ipairs({ healthGui, powGui, nameGui }) do
+		gui.AlwaysOnTop = true
+		-- gui.StudsOffset = Vector3.new(0, 2.5, 0)
+		gui.Parent = head
 	end
 
-	-- Cập nhật máu lần đầu
-	local function updateHealth()
-		local health = humanoid.Health
-		local maxHealth = humanoid.MaxHealth
-		local percent = math.clamp(health / maxHealth, 0, 1)
-		healthBar.Size = UDim2.new(percent, 0, 1, 0)
+	-- Name
+	local nameLabel = nameGui:WaitForChild("NameLabel") :: TextLabel
+	nameLabel.Text = owner and (owner.DisplayName or owner.Name) or character.Name
 
-		local color
-		if percent > 0.5 then
-			color = Color3.fromRGB(0, 255, 0)
-		elseif percent > 0.25 then
-			color = Color3.fromRGB(255, 255, 0)
-		else
-			color = Color3.fromRGB(255, 0, 0)
-		end
-		healthBar.BackgroundColor3 = color
+	-- Health bar
+	local healthBar = healthGui:WaitForChild("Frame") :: Frame
+
+	local function updateHealth()
+		local percent = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+		healthBar.Size = UDim2.new(percent, 0, 1, 0)
 	end
 
 	humanoid.HealthChanged:Connect(updateHealth)
@@ -131,41 +96,14 @@ function GUIClass:AttachToCharacter(character: Model)
 	updateHealth()
 end
 
--- Cập nhật thanh máu (cho instance chính của local player)
-function GUIClass:UpdateHealth(humanoid: Humanoid)
-	local health = humanoid.Health
-	local maxHealth = humanoid.MaxHealth
-	local percent = math.clamp(health / maxHealth, 0, 1)
-
-	self.HealthBar.Size = UDim2.new(percent, 0, 1, 0)
-
-	local color
-	if percent > 0.5 then
-		color = Color3.fromRGB(0, 255, 0)
-	elseif percent > 0.25 then
-		color = Color3.fromRGB(255, 255, 0)
-	else
-		color = Color3.fromRGB(255, 0, 0)
-	end
-	self.HealthBar.BackgroundColor3 = color
-end
-
--- Hủy GUI và ngắt kết nối
+-- =======================
+-- Destroy
+-- =======================
 function GUIClass:Destroy()
 	for _, conn in ipairs(self.Connections) do
 		conn:Disconnect()
 	end
 	self.Connections = {}
-
-	if self.HealthGui then
-		self.HealthGui:Destroy()
-	end
-	if self.PowGui then
-		self.PowGui:Destroy()
-	end
-	if self.NameGui then
-		self.NameGui:Destroy()
-	end
 end
 
 return GUIClass

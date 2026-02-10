@@ -9,7 +9,7 @@ local Util = {}
 local CurrentAttackTrack: { [Model]: AnimationTrack } = {}
 local CurrentAttackId: { [Model]: number } = {}
 
-local ATTACK_WALK_SPEED = 0
+local ATTACK_WALK_SPEED = 5
 local NORMAL_WALK_SPEED = 16
 
 local IsInAttackState: { [Model]: boolean } = {}
@@ -25,7 +25,6 @@ local function exitAttackState(character: Model)
 
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
-		humanoid.AutoRotate = true
 		humanoid.WalkSpeed = NORMAL_WALK_SPEED
 	end
 end
@@ -50,69 +49,12 @@ local function enterAttackState(character: Model)
 	end
 
 	IsInAttackState[character] = true
-
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.AutoRotate = false
-	end
-end
-
---------------------------------------------------
--- DASH FORWARD (INTERNAL)
---------------------------------------------------
-local function dashForward(character: Model, distance: number, duration: number)
-	local hrp = character:FindFirstChild("HumanoidRootPart")
-	if not hrp then
-		return
-	end
-
-	-- Huỷ tween cũ
-	local oldTween = hrp:FindFirstChild("AttackDashTween")
-	if oldTween then
-		oldTween:Cancel()
-		oldTween:Destroy()
-	end
-
-	-- Anti-gravity (chỉ Y)
-	local bodyPos = Instance.new("BodyPosition")
-	bodyPos.MaxForce = Vector3.new(0, math.huge, 0)
-	bodyPos.P = 4000
-	bodyPos.D = 800
-	bodyPos.Position = hrp.Position
-	bodyPos.Parent = hrp
-
-	local startCF = hrp.CFrame
-	local forward = Vector3.new(startCF.LookVector.X, 0, startCF.LookVector.Z)
-	if forward.Magnitude < 0.01 then
-		bodyPos:Destroy()
-		return
-	end
-
-	forward = forward.Unit
-	local targetCF = startCF + forward * distance
-
-	local tween = TweenService:Create(hrp, TweenInfo.new(duration, Enum.EasingStyle.Linear), { CFrame = targetCF })
-
-	tween.Name = "AttackDashTween"
-	tween.Parent = hrp
-	tween:Play()
-
-	tween.Completed:Once(function()
-		tween:Destroy()
-		bodyPos:Destroy()
-	end)
 end
 
 --------------------------------------------------
 -- PUBLIC API
 --------------------------------------------------
-function Util.playFixedTime(
-	character: Model,
-	animId: string,
-	attackTime: number,
-	freezeTime: number,
-	dashDistance: number?
-)
+function Util.playFixedTime(character: Model, animId: string, attackTime: number, freezeTime: number)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then
 		return
@@ -140,10 +82,6 @@ function Util.playFixedTime(
 	--------------------------------------------------
 	humanoid.WalkSpeed = ATTACK_WALK_SPEED
 
-	if dashDistance and dashDistance > 0 then
-		dashForward(character, dashDistance, attackTime)
-	end
-
 	local anim = Instance.new("Animation")
 	anim.AnimationId = animId
 
@@ -164,14 +102,15 @@ function Util.playFixedTime(
 		if CurrentAttackId[character] ~= attackId then
 			return
 		end
-		if not track.IsPlaying then
-			return
-		end
 
-		track.TimePosition = track.Length
-		track:AdjustSpeed(0)
-
+		-- 🚨 luôn reset gameplay state
 		humanoid.WalkSpeed = NORMAL_WALK_SPEED
+
+		-- animation chỉ là phụ
+		if track.IsPlaying then
+			track.TimePosition = track.Length
+			track:AdjustSpeed(0)
+		end
 
 		task.delay(freezeTime, function()
 			if CurrentAttackId[character] ~= attackId then

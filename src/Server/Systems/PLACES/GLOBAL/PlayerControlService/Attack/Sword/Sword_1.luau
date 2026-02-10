@@ -1,8 +1,5 @@
 --!strict
-local Players = game:GetService("Players")
-local CollectionService = game:GetService("CollectionService")
-local Debris = game:GetService("Debris")
-local HttpService = game:GetService("HttpService")
+local SpawnHitbox = require(script.Parent.Parent.SpawnHitbox)
 
 local AttackAnimUtil = require(script.Parent.Parent.AttackAnimationUtil)
 
@@ -42,46 +39,16 @@ function Class:play(character: Model)
 	warn("Sword 1 Attack")
 
 	-- ▶ ANIMATION
-	AttackAnimUtil.playFixedTime(character, Anim, ATTACK_TIME, FREEZE_TIME, 5)
+	AttackAnimUtil.playFixedTime(character, Anim, ATTACK_TIME, FREEZE_TIME)
 
 	-- ▶ HITBOX
-	self:createHitbox(character, ATTACK_TIME)
+	SpawnHitbox:createHitbox(character, ATTACK_TIME, Vector3.new(10, 3, 5))
 
 	-- ▶ CHO PHÉP COMBO TIẾP
 	task.delay(ATTACK_TIME, function()
 		character:SetAttribute("ComboIndex", 1)
 		character:SetAttribute("IsAttacking", false)
 	end)
-end
-
-----------------------------------------------------------------
--- HITBOX
-----------------------------------------------------------------
-function Class:createHitbox(character: Model, activeTime: number)
-	local hrp = character:FindFirstChild("HumanoidRootPart")
-	if not hrp then
-		return
-	end
-
-	local part = Instance.new("Part")
-	part.Name = "Hitbox_" .. HttpService:GenerateGUID(false)
-	part.Size = Vector3.new(10, 10, 10)
-	part.CFrame = hrp.CFrame * CFrame.new(0, 0, -6)
-	part.Anchored = true
-	part.CanCollide = false
-	part.Transparency = self.HitboxVisible and 0 or 1
-	part.Parent = workspace
-
-	CollectionService:AddTag(part, "HITBOX")
-	CollectionService:AddTag(part, "STUN_HITBOX")
-	part:SetAttribute("Damage", character:GetAttribute("Damage"))
-
-	local owner = Instance.new("ObjectValue")
-	owner.Name = "Owner"
-	owner.Value = Players:GetPlayerFromCharacter(character)
-	owner.Parent = part
-
-	Debris:AddItem(part, activeTime)
 end
 
 return Class

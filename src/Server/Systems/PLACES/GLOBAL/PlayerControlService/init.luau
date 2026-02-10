@@ -6,8 +6,6 @@ local Dash = require(script.Dash)
 local Attack = require(script.Attack)
 local Skill = require(script.Skill)
 
--- local MovementController = require(script.CharacterMovementController)
-
 local Server = require(ReplicatedStorage.Shared.Network.Server)
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
@@ -30,13 +28,8 @@ end
 function init:_Start()
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function(character)
-			-- MovementController.bind(character)
-
 			character:SetAttribute("IsAttacking", false)
-			-- MovementController.bind(character)
-			character:WaitForChild("Humanoid").Died:Connect(function()
-				-- MovementController.unbind(character)
-			end)
+			character:WaitForChild("Humanoid").Died:Connect(function() end)
 
 			local healthScript = character:WaitForChild("Health", 3)
 			if healthScript then
@@ -46,14 +39,18 @@ function init:_Start()
 	end)
 
 	Server.Player_Action.SetCallback(function(Player, Action, State)
-		-- warn("Player_Action", Player.Name, Action, State)
-
 		if Action == "ATTACK" then
 			self.Attack:onAttack(Player)
 		elseif Action == "DASH" and Player.Character:GetAttribute("IsAttacking") == false then
 			self.Dash:onDash(Player)
-		elseif Action == "SKILL" then
-			self.Skill:onSkill(Player)
+		elseif Action == "SKILL_01" then
+			self.Skill:onSkill(Player, 1)
+		elseif Action == "SKILL_02" then
+			self.Skill:onSkill(Player, 2)
+		elseif Action == "SKILL_03" then
+			self.Skill:onSkill(Player, 3)
+		elseif Action == "SKILL_ULTI" then
+			self.Skill:onSkill(Player, 4)
 		end
 	end)
 end

@@ -252,17 +252,25 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 			end
 		elseif id == 2 then
 			local value, value2
-			local bool_2 = buffer.readu8(incoming_buff, read(1))
+			local bool_2 = buffer.readu16(incoming_buff, read(2))
 			if bit32.btest(bool_2, 0b0000000000000001) then
 				value = "ATTACK"
 			elseif bit32.btest(bool_2, 0b0000000000000010) then
-				value = "DASH"
+				value = "SKILL_01"
 			elseif bit32.btest(bool_2, 0b0000000000000100) then
-				value = "SKILL"
+				value = "SKILL_02"
 			elseif bit32.btest(bool_2, 0b0000000000001000) then
+				value = "SKILL_03"
+			elseif bit32.btest(bool_2, 0b0000000000010000) then
+				value = "SKILL_ULTI"
+			elseif bit32.btest(bool_2, 0b0000000000100000) then
+				value = "DASH"
+			elseif bit32.btest(bool_2, 0b0000000001000000) then
+				value = "SKILL"
+			elseif bit32.btest(bool_2, 0b0000000010000000) then
 				value = "BLOCK"
 			end
-			value2 = bit32.btest(bool_2, 0b0000000000010000)
+			value2 = bit32.btest(bool_2, 0b0000000100000000)
 			if reliable_events[2] then
 				task.spawn(reliable_events[2], player, value, value2)
 			end
@@ -519,7 +527,7 @@ local returns = {
 		end,
 	},
 	Player_Action = {
-		SetCallback = function(Callback: (Player: Player, Action: ("ATTACK" | "DASH" | "SKILL" | "BLOCK"), State: (boolean)) -> ()): () -> ()
+		SetCallback = function(Callback: (Player: Player, Action: ("ATTACK" | "SKILL_01" | "SKILL_02" | "SKILL_03" | "SKILL_ULTI" | "DASH" | "SKILL" | "BLOCK"), State: (boolean)) -> ()): () -> ()
 			reliable_events[2] = Callback
 			return function()
 				reliable_events[2] = nil

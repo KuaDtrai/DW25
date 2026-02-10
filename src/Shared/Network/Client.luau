@@ -285,26 +285,34 @@ local returns = {
 		end,
 	},
 	Player_Action = {
-		Fire = function(Action: ("ATTACK" | "DASH" | "SKILL" | "BLOCK"), State: (boolean))
+		Fire = function(Action: ("ATTACK" | "SKILL_01" | "SKILL_02" | "SKILL_03" | "SKILL_ULTI" | "DASH" | "SKILL" | "BLOCK"), State: (boolean))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			local bool_3 = 0
-			local bool_3_pos_1 = alloc(1)
+			local bool_3_pos_1 = alloc(2)
 			if Action == "ATTACK" then
 				bool_3 = bit32.bor(bool_3, 0b0000000000000001)
-			elseif Action == "DASH" then
+			elseif Action == "SKILL_01" then
 				bool_3 = bit32.bor(bool_3, 0b0000000000000010)
-			elseif Action == "SKILL" then
+			elseif Action == "SKILL_02" then
 				bool_3 = bit32.bor(bool_3, 0b0000000000000100)
-			elseif Action == "BLOCK" then
+			elseif Action == "SKILL_03" then
 				bool_3 = bit32.bor(bool_3, 0b0000000000001000)
+			elseif Action == "SKILL_ULTI" then
+				bool_3 = bit32.bor(bool_3, 0b0000000000010000)
+			elseif Action == "DASH" then
+				bool_3 = bit32.bor(bool_3, 0b0000000000100000)
+			elseif Action == "SKILL" then
+				bool_3 = bit32.bor(bool_3, 0b0000000001000000)
+			elseif Action == "BLOCK" then
+				bool_3 = bit32.bor(bool_3, 0b0000000010000000)
 			else
 				error("Invalid enumerator")
 			end
 			if State then
-				bool_3 = bit32.bor(bool_3, 0b0000000000010000)
+				bool_3 = bit32.bor(bool_3, 0b0000000100000000)
 			end
-			buffer.writeu8(outgoing_buff, bool_3_pos_1, bool_3)
+			buffer.writeu16(outgoing_buff, bool_3_pos_1, bool_3)
 		end,
 	},
 	MatchMaking = {

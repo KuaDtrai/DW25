@@ -12,12 +12,10 @@ local NORMAL_SPEED = 16
 -- INTERNAL
 --------------------------------------------------
 local function applyAttackState(humanoid: Humanoid)
-	humanoid.AutoRotate = false
 	humanoid.WalkSpeed = ATTACK_SPEED
 end
 
 local function applyNormalState(humanoid: Humanoid)
-	humanoid.AutoRotate = true
 	humanoid.WalkSpeed = NORMAL_SPEED
 end
 

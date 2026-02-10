@@ -3,9 +3,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
-local MouseLock = require(script.MouseLock)
 local Player = Players.LocalPlayer
 local PlayerGUI = Player:WaitForChild("PlayerGui")
+local Dash = require(script.Dash)
 
 local Utilities = require(ReplicatedStorage.Shared.Modules.Utilities)
 local Client = require(ReplicatedStorage.Shared.Network.Client)
@@ -13,7 +13,7 @@ local Openday = require(ReplicatedStorage.Shared.Openday)
 
 local UI = require(script.UI)
 local GUI = require(script.GUI)
-local Minimap = require(script.Minimap)
+-- local Minimap = require(script.Minimap)
 
 local VFX_C1 = ReplicatedStorage.Shared.Assets.VFX.COMBO1
 local VFX_C2 = ReplicatedStorage.Shared.Assets.VFX.COMBO2
@@ -35,10 +35,8 @@ local init = {
 ----------------------------------------------------------------
 function init:_Setup()
 	self.GUI = GUI.new()
-	self.Minimap = Minimap.new()
+	-- self.Minimap = Minimap.new()
 	self.UI = UI.new()
-	self.MouseLock = MouseLock.new()
-
 	self.MouseLock:Enable()
 end
 
@@ -75,6 +73,7 @@ function init:_Start()
 		-- DASH
 		----------------------------------------------------------------
 		elseif input.KeyCode == Enum.KeyCode.Q then
+			Dash:DoDash()
 		----------------------------------------------------------------
 		-- SKILL
 		----------------------------------------------------------------

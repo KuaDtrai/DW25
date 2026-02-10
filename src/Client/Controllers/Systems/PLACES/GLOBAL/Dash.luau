@@ -1,170 +1,210 @@
 --!strict
+----------------------------------------------------------------
+-- SERVICES
+----------------------------------------------------------------
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Openday = require(ReplicatedStorage.Shared.Openday)
-
-export type System = {
-	_Extensions: { Openday.Extension },
-	_Start: (self: System) -> (),
-	_Setup: (self: System) -> (),
-}
-
-local Dash = {
-	_Extensions = {},
-} :: System
-
-local RS = game:GetService("ReplicatedStorage")
-local VfxFolder = RS.Shared.Assets:WaitForChild("VFX")
-local DashClone = VfxFolder:WaitForChild("DashClone")
-local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-
 local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
 
-local Player = game.Players.LocalPlayer
-local Char = Player.Character or Player.CharacterAdded:Wait()
+----------------------------------------------------------------
+-- MODULE
+----------------------------------------------------------------
+local Dash = {}
+Dash.__index = Dash
 
-local Hum = Char:WaitForChild("Humanoid")
-local HRP = Char:WaitForChild("HumanoidRootPart")
+----------------------------------------------------------------
+-- PLAYER
+----------------------------------------------------------------
+local Player = Players.LocalPlayer
 
-local WKeyDown = false
-local AKeyDown = false
-local SKeyDown = false
-local DKeyDown = false
+----------------------------------------------------------------
+-- CONFIG
+----------------------------------------------------------------
+local DASH_TIME = 0.3
+local DASH_FORCE = 70
+local DASH_COOLDOWN = 0.7
 
-local DashDeb = false
-local DashTime = 0.5
+----------------------------------------------------------------
+-- INPUT STATE
+----------------------------------------------------------------
+local W, A, S, D = false, false, false, false
+local DashDebounce = false
 
-local AnimationFolder = RS.Shared.Assets:WaitForChild("Animations")
+----------------------------------------------------------------
+-- CHARACTER REFERENCES
+----------------------------------------------------------------
+local Character: Model? = nil
+local Humanoid: Humanoid? = nil
+local HRP: BasePart? = nil
 
-local ForwardDashAnime = Hum:LoadAnimation(AnimationFolder:WaitForChild("ForwardDash"))
-local BackDashAnime = Hum:LoadAnimation(AnimationFolder:WaitForChild("BackDash"))
-local LeftDashAnime = Hum:LoadAnimation(AnimationFolder:WaitForChild("LeftDash"))
-local RightDashAnime = Hum:LoadAnimation(AnimationFolder:WaitForChild("RightDash"))
+----------------------------------------------------------------
+-- ASSETS
+----------------------------------------------------------------
+local RS = ReplicatedStorage
+local VfxFolder = RS:WaitForChild("VfxFolder")
+local DashCloneTemplate = VfxFolder:WaitForChild("DashClone")
 
-local Client = require(RS.Shared.Network.Client)
+local AnimFolder = RS.Shared.Assets.Animations
 
-UIS.InputBegan:Connect(function(Key, IsTyping)
-	if IsTyping then
+----------------------------------------------------------------
+-- DASH ANIMATIONS (LOAD THEO HỆ CŨ)
+----------------------------------------------------------------
+local ForwardDash: AnimationTrack? = nil
+local BackDash: AnimationTrack? = nil
+local LeftDash: AnimationTrack? = nil
+local RightDash: AnimationTrack? = nil
+
+local CurrentDashTrack: AnimationTrack? = nil
+
+----------------------------------------------------------------
+-- BIND CHARACTER (RESPAWN SAFE)
+----------------------------------------------------------------
+local function BindCharacter(char: Model)
+	Character = char
+	Humanoid = char:WaitForChild("Humanoid")
+	HRP = char:WaitForChild("HumanoidRootPart")
+
+	ForwardDash = Humanoid:LoadAnimation(AnimFolder:WaitForChild("ForwardDash"))
+	BackDash = Humanoid:LoadAnimation(AnimFolder:WaitForChild("BackDash"))
+	LeftDash = Humanoid:LoadAnimation(AnimFolder:WaitForChild("LeftDash"))
+	RightDash = Humanoid:LoadAnimation(AnimFolder:WaitForChild("RightDash"))
+end
+
+if Player.Character then
+	BindCharacter(Player.Character)
+end
+
+Player.CharacterAdded:Connect(BindCharacter)
+
+----------------------------------------------------------------
+-- INPUT TRACK
+----------------------------------------------------------------
+RunService.RenderStepped:Connect(function()
+	W = UserInputService:IsKeyDown(Enum.KeyCode.W)
+	A = UserInputService:IsKeyDown(Enum.KeyCode.A)
+	S = UserInputService:IsKeyDown(Enum.KeyCode.S)
+	D = UserInputService:IsKeyDown(Enum.KeyCode.D)
+end)
+
+----------------------------------------------------------------
+-- DASH EFFECT (CLONE ANIM THEO DASH)
+----------------------------------------------------------------
+local function DashEffect()
+	if not Character or not HRP or not CurrentDashTrack then
 		return
 	end
-	if Key.KeyCode == Enum.KeyCode.Q then
-		if DashDeb == false and Char:FindFirstChild("Deb") == nil then
-			DashDeb = true
-			delay(DashTime + 0.7, function()
-				DashDeb = false
-			end)
-			if WKeyDown then
-				coroutine.wrap(function()
-					DashEffect()
-				end)()
-				local Tween = TweenService:Create(
-					HRP,
-					TweenInfo.new(DashTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
-					{ Velocity = HRP.CFrame.LookVector * 70 }
-				)
-				Tween:Play()
-				ForwardDashAnime:Play()
-				Client.Player_Action.Fire("DASH", true)
-				delay(DashTime + 0.1, function()
-					ForwardDashAnime:Stop()
-				end)
-			elseif AKeyDown then
-				coroutine.wrap(function()
-					DashEffect()
-				end)()
-				local Tween = TweenService:Create(
-					HRP,
-					TweenInfo.new(DashTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
-					{ Velocity = HRP.CFrame.RightVector * -70 }
-				)
-				Tween:Play()
-				LeftDashAnime:Play()
-				Client.Player_Action.Fire("DASH", true)
-				delay(DashTime + 0.1, function()
-					LeftDashAnime:Stop()
-				end)
-			elseif SKeyDown then
-				coroutine.wrap(function()
-					DashEffect()
-				end)()
-				local Tween = TweenService:Create(
-					HRP,
-					TweenInfo.new(DashTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
-					{ Velocity = HRP.CFrame.LookVector * -70 }
-				)
-				Tween:Play()
-				BackDashAnime:Play()
-				Client.Player_Action.Fire("DASH", true)
-				delay(DashTime + 0.1, function()
-					BackDashAnime:Stop()
-				end)
-			elseif DKeyDown then
-				coroutine.wrap(function()
-					DashEffect()
-				end)()
-				local Tween = TweenService:Create(
-					HRP,
-					TweenInfo.new(DashTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
-					{ Velocity = HRP.CFrame.RightVector * 70 }
-				)
-				Tween:Play()
-				RightDashAnime:Play()
-				Client.Player_Action.Fire("DASH", true)
-				delay(DashTime + 0.1, function()
-					RightDashAnime:Stop()
-				end)
-			end
+
+	for _ = 1, 7 do
+		if not Character then
+			return
 		end
-	end
-end)
 
-RunService.RenderStepped:Connect(function()
-	if UIS:IsKeyDown(Enum.KeyCode.W) then
-		WKeyDown = true
-	else
-		WKeyDown = false
-	end
-	if UIS:IsKeyDown(Enum.KeyCode.A) then
-		AKeyDown = true
-	else
-		AKeyDown = false
-	end
-	if UIS:IsKeyDown(Enum.KeyCode.S) then
-		SKeyDown = true
-	else
-		SKeyDown = false
-	end
-	if UIS:IsKeyDown(Enum.KeyCode.D) then
-		DKeyDown = true
-	else
-		DKeyDown = false
-	end
-end)
+		local clone = DashCloneTemplate:Clone()
+		clone:SetPrimaryPartCFrame(HRP.CFrame)
+		clone.Parent = workspace
+		Debris:AddItem(clone, 0.5)
 
-function DashEffect()
-	for i = 1, 7 do
-		local Clone = DashClone:Clone()
-		Clone:SetPrimaryPartCFrame(HRP.CFrame)
-		Clone.Parent = workspace
-		game.Debris:AddItem(Clone, 0.5)
-		spawn(function()
-			for i, v in pairs(Clone:GetChildren()) do
-				spawn(function()
-					if v:IsA("MeshPart") or v:IsA("Part") then
-						v.CFrame = Char:FindFirstChild(v.Name).CFrame
-						for i = 0.25, 1, 0.1 do
-							v.Transparency = i
-							v.Reflectance = i
-							wait()
-						end
-						Clone:Destroy()
+		-- Gắn humanoid giả để play animation
+		local hum = Instance.new("Humanoid")
+		hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		hum.Parent = clone
+
+		local anim = Instance.new("Animation")
+		anim.AnimationId = CurrentDashTrack.Animation.AnimationId
+
+		local track = hum:LoadAnimation(anim)
+		track.TimePosition = CurrentDashTrack.TimePosition
+		track:Play()
+
+		task.spawn(function()
+			for _, part in ipairs(clone:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.Anchored = true
+					part.CanCollide = false
+					for t = 0.25, 1, 0.1 do
+						part.Transparency = t
+						part.Reflectance = t
+						task.wait()
 					end
-				end)
+				end
 			end
+			clone:Destroy()
 		end)
-		wait(0.05)
+
+		task.wait(0.05)
 	end
 end
+
+----------------------------------------------------------------
+-- PUBLIC DASH
+----------------------------------------------------------------
+function Dash:DoDash()
+	if DashDebounce or not Character or not Humanoid or not HRP then
+		return
+	end
+
+	if Character:FindFirstChild("Deb") then
+		return
+	end
+
+	DashDebounce = true
+	task.delay(DASH_TIME + DASH_COOLDOWN, function()
+		DashDebounce = false
+	end)
+
+	local dashDir: Vector3
+	local dashTrack: AnimationTrack
+
+	if W then
+		dashDir = HRP.CFrame.LookVector
+		dashTrack = ForwardDash
+	elseif S then
+		dashDir = -HRP.CFrame.LookVector
+		dashTrack = BackDash
+	elseif A then
+		dashDir = -HRP.CFrame.RightVector
+		dashTrack = LeftDash
+	elseif D then
+		dashDir = HRP.CFrame.RightVector
+		dashTrack = RightDash
+	else
+		dashDir = HRP.CFrame.LookVector
+		dashTrack = ForwardDash
+	end
+
+	if not dashTrack then
+		return
+	end
+
+	CurrentDashTrack = dashTrack
+
+	task.spawn(DashEffect)
+
+	TweenService:Create(
+		HRP,
+		TweenInfo.new(DASH_TIME, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+		{ Velocity = dashDir * DASH_FORCE }
+	):Play()
+
+	dashTrack:Play()
+	task.delay(DASH_TIME + 0.1, function()
+		dashTrack:Stop()
+	end)
+end
+
+----------------------------------------------------------------
+-- INPUT (Q)
+----------------------------------------------------------------
+UserInputService.InputBegan:Connect(function(input, typing)
+	if typing then
+		return
+	end
+	if input.KeyCode == Enum.KeyCode.Q then
+		Dash:DoDash()
+	end
+end)
 
 return Dash

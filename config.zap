@@ -38,7 +38,7 @@ event Player_Action = {
     type: Reliable,
     call: SingleAsync,
     data: (
-        Action: enum{ATTACK, DASH, SKILL, BLOCK},
+        Action: enum{ATTACK, SKILL_01, SKILL_02, SKILL_03, SKILL_ULTI, DASH, SKILL, BLOCK},
         State: boolean,
     ),
 }

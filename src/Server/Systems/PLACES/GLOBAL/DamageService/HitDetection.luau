@@ -30,7 +30,7 @@ function Class.new(): HitDetection
 			local hitCharacter = otherPart.Parent
 			local hitPlayer = Players:GetPlayerFromCharacter(hitCharacter)
 
-			if hitPlayer and hitPlayer:GetAttribute("IsDashing") then
+			if hitPlayer and hitPlayer:GetAttribute("Dashing") then
 				return
 			end
 
