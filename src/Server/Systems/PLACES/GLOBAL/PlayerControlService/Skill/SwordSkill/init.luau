@@ -1,10 +1,10 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-local Sword_1 = require(script.Parent.Sword.Sword_1)
-local Sword_2 = require(script.Parent.Sword.Sword_2)
-local Sword_3 = require(script.Parent.Sword.Sword_3)
-local Sword_4 = require(script.Parent.Sword.Sword_4)
+local Sword_1 = require(script.Parent.SwordSkill.SwordSkill_01)
+local Sword_2 = require(script.Parent.SwordSkill.SwordSkill_02)
+local Sword_3 = require(script.Parent.SwordSkill.SwordSkill_03)
+local Sword_4 = require(script.Parent.SwordSkill.SwordSkill_04)
 local Server = require(ReplicatedStorage.Shared.Network.Server)
 
 export type init = {

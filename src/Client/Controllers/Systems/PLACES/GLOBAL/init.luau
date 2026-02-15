@@ -15,10 +15,10 @@ local UI = require(script.UI)
 local GUI = require(script.GUI)
 -- local Minimap = require(script.Minimap)
 
-local VFX_C1 = ReplicatedStorage.Shared.Assets.VFX.COMBO1
-local VFX_C2 = ReplicatedStorage.Shared.Assets.VFX.COMBO2
-local VFX_C3 = ReplicatedStorage.Shared.Assets.VFX.COMBO3
-local VFX_Hit = ReplicatedStorage.Shared.Assets.VFX.HIT
+local VFX_C1 = ReplicatedStorage.Shared.Assets.VFXs.COMBO1
+local VFX_C2 = ReplicatedStorage.Shared.Assets.VFXs.COMBO2
+local VFX_C3 = ReplicatedStorage.Shared.Assets.VFXs.COMBO3
+local VFX_Hit = ReplicatedStorage.Shared.Assets.VFXs.HIT
 
 export type System = {
 	_Extensions: { Openday.Extension },

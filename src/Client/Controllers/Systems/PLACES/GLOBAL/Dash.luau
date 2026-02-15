@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
+local Client = require(ReplicatedStorage.Shared.Network.Client)
 local Debris = game:GetService("Debris")
 
 ----------------------------------------------------------------
@@ -24,7 +24,6 @@ local Player = Players.LocalPlayer
 -- CONFIG
 ----------------------------------------------------------------
 local DASH_TIME = 0.3
-local DASH_FORCE = 70
 local DASH_COOLDOWN = 0.7
 
 ----------------------------------------------------------------
@@ -44,7 +43,7 @@ local HRP: BasePart? = nil
 -- ASSETS
 ----------------------------------------------------------------
 local RS = ReplicatedStorage
-local VfxFolder = RS:WaitForChild("VfxFolder")
+local VfxFolder = RS.Shared.Assets:WaitForChild("VFXs")
 local DashCloneTemplate = VfxFolder:WaitForChild("DashClone")
 
 local AnimFolder = RS.Shared.Assets.Animations
@@ -97,7 +96,7 @@ local function DashEffect()
 		return
 	end
 
-	for _ = 1, 7 do
+	for _ = 1, 5 do
 		if not Character then
 			return
 		end
@@ -107,18 +106,44 @@ local function DashEffect()
 		clone.Parent = workspace
 		Debris:AddItem(clone, 0.5)
 
-		-- Gắn humanoid giả để play animation
-		local hum = Instance.new("Humanoid")
-		hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-		hum.Parent = clone
+		------------------------------------------------
+		-- COPY POSE TỪ CHARACTER THẬT (GIỐNG SCRIPT CŨ)
+		------------------------------------------------
+		for _, part in ipairs(clone:GetChildren()) do
+			if part:IsA("BasePart") then
+				local original = Character:FindFirstChild(part.Name)
+				if original and original:IsA("BasePart") then
+					part.CFrame = original.CFrame
+				end
+			end
+		end
+
+		------------------------------------------------
+		-- PLAY ANIMATION GIỐNG PLAYER
+		------------------------------------------------
+		local hum = clone:FindFirstChildOfClass("Humanoid")
+		if not hum then
+			hum = Instance.new("Humanoid")
+			hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+			hum.Parent = clone
+		end
+
+		local animator = hum:FindFirstChildOfClass("Animator")
+		if not animator then
+			animator = Instance.new("Animator")
+			animator.Parent = hum
+		end
 
 		local anim = Instance.new("Animation")
 		anim.AnimationId = CurrentDashTrack.Animation.AnimationId
 
-		local track = hum:LoadAnimation(anim)
+		local track = animator:LoadAnimation(anim)
 		track.TimePosition = CurrentDashTrack.TimePosition
 		track:Play()
 
+		------------------------------------------------
+		-- FADE EFFECT
+		------------------------------------------------
 		task.spawn(function()
 			for _, part in ipairs(clone:GetChildren()) do
 				if part:IsA("BasePart") then
@@ -158,21 +183,31 @@ function Dash:DoDash()
 	local dashDir: Vector3
 	local dashTrack: AnimationTrack
 
-	if W then
+	-- kiểm tra shift lock
+	local isShiftLock = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+
+	if not isShiftLock then
+		-- ❗ Không shift lock → luôn forward
 		dashDir = HRP.CFrame.LookVector
 		dashTrack = ForwardDash
-	elseif S then
-		dashDir = -HRP.CFrame.LookVector
-		dashTrack = BackDash
-	elseif A then
-		dashDir = -HRP.CFrame.RightVector
-		dashTrack = LeftDash
-	elseif D then
-		dashDir = HRP.CFrame.RightVector
-		dashTrack = RightDash
 	else
-		dashDir = HRP.CFrame.LookVector
-		dashTrack = ForwardDash
+		-- Shift lock → dash theo WASD
+		if W then
+			dashDir = HRP.CFrame.LookVector
+			dashTrack = ForwardDash
+		elseif S then
+			dashDir = -HRP.CFrame.LookVector
+			dashTrack = BackDash
+		elseif A then
+			dashDir = -HRP.CFrame.RightVector
+			dashTrack = LeftDash
+		elseif D then
+			dashDir = HRP.CFrame.RightVector
+			dashTrack = RightDash
+		else
+			dashDir = HRP.CFrame.LookVector
+			dashTrack = ForwardDash
+		end
 	end
 
 	if not dashTrack then
@@ -182,12 +217,7 @@ function Dash:DoDash()
 	CurrentDashTrack = dashTrack
 
 	task.spawn(DashEffect)
-
-	TweenService:Create(
-		HRP,
-		TweenInfo.new(DASH_TIME, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
-		{ Velocity = dashDir * DASH_FORCE }
-	):Play()
+	Client.Player_Action.Fire("DASH", true)
 
 	dashTrack:Play()
 	task.delay(DASH_TIME + 0.1, function()
@@ -195,16 +225,16 @@ function Dash:DoDash()
 	end)
 end
 
-----------------------------------------------------------------
--- INPUT (Q)
-----------------------------------------------------------------
-UserInputService.InputBegan:Connect(function(input, typing)
-	if typing then
-		return
-	end
-	if input.KeyCode == Enum.KeyCode.Q then
-		Dash:DoDash()
-	end
-end)
+-- ----------------------------------------------------------------
+-- -- INPUT (Q)
+-- ----------------------------------------------------------------
+-- UserInputService.InputBegan:Connect(function(input, typing)
+-- 	if typing then
+-- 		return
+-- 	end
+-- 	if input.KeyCode == Enum.KeyCode.Q then
+-- 		Dash:DoDash()
+-- 	end
+-- end)
 
 return Dash
