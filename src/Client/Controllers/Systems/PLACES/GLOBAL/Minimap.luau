@@ -5,7 +5,7 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 
-local MapFolder = workspace:WaitForChild("MapFolder")
+-- local MapFolder = workspace:WaitForChild("MapFolder")
 
 export type Minimap = {
 	__index: Minimap,
@@ -31,10 +31,10 @@ function Class.new(): Minimap
 	camera.CameraType = Enum.CameraType.Scriptable
 	camera.FieldOfView = 1
 	frame.CurrentCamera = camera
-	for _, object in ipairs(MapFolder:GetChildren()) do
-		local clone = object:Clone()
-		clone.Parent = frame
-	end
+	-- for _, object in ipairs(MapFolder:GetChildren()) do
+	-- 	local clone = object:Clone()
+	-- 	clone.Parent = frame
+	-- end
 
 	RunService.RenderStepped:Connect(function()
 		camera.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 5000, 0), hrp.Position)

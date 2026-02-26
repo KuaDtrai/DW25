@@ -68,7 +68,8 @@ function init:_Start()
 			if not Player.Character:GetAttribute("IsAttacking") then
 				Client.Player_Action.Fire("ATTACK", true)
 			end
-
+		elseif input.KeyCode == Enum.KeyCode.X then
+			Client.Player_Action.Fire("SKILL_01", true)
 		----------------------------------------------------------------
 		-- DASH
 		----------------------------------------------------------------

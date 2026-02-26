@@ -19,6 +19,7 @@ end
 
 function Class:onDash(player: Player)
 	local character = player.Character
+	warn(character)
 	if character and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart") then
 		character:SetAttribute("Dashing", true)
 

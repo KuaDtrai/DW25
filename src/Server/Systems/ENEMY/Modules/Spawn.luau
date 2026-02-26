@@ -36,8 +36,6 @@ function Class.new(): Spawn
 	return self
 end
 
-local PhysicsService = game:GetService("PhysicsService")
-
 local function setNPCNoCollision(model: Model)
 	for _, desc in ipairs(model:GetDescendants()) do
 		if desc:IsA("BasePart") then
@@ -55,6 +53,7 @@ function Class:Spawn(spawner: string, npcModel: Model)
 
 	for _, spawnPoint in spawnPoints do
 		-- nếu spawn point này đang có NPC thì bỏ qua
+		spawnPoint.Transparency = 1
 		if self._spawnPointNPCs[spawnPoint] then
 			continue
 		end
@@ -78,7 +77,7 @@ function Class:Spawn(spawner: string, npcModel: Model)
 			humanoid.Died:Connect(function()
 				self._spawnPointNPCs[spawnPoint] = nil
 
-				task.delay(30, function()
+				task.delay(60, function()
 					-- spawn lại đúng spawn point cũ
 					if spawnPoint.Parent then
 						self:Spawn(spawner, npcModel)

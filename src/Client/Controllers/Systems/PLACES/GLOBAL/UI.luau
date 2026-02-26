@@ -5,8 +5,6 @@ local UserInputService = game:GetService("UserInputService")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 local Client = require(ReplicatedStorage.Shared.Network.Client)
-local CONSTANTS = require(ReplicatedStorage.Shared.Libraries.CONSTANTS)
-local Utilities = require(ReplicatedStorage.Shared.Modules.Utilities)
 local Dash = require(script.Parent.Dash)
 
 export type UI = {
@@ -17,15 +15,13 @@ export type UI = {
 local Class: UI = {} :: UI
 Class.__index = Class
 
-local canDash = true
-local dashCooldown = 1
-
 function Class.new(): UI
 	local self: UI = setmetatable({} :: any, Class)
 
 	self.PlayerGui = Player:WaitForChild("PlayerGui")
 
 	self.MainUI = self.PlayerGui:WaitForChild("HUD") :: ScreenGui
+	self.MainUI.Enabled = true
 
 	self.BTN_Attack = self.MainUI:WaitForChild("Attack_BTN") :: ImageButton
 	self.BTN_Dash = self.MainUI:WaitForChild("Dash_BTN") :: ImageButton
@@ -35,6 +31,16 @@ function Class.new(): UI
 	self.BTN_Skill_03 = self.MainUI:WaitForChild("Skill_03_BTN") :: ImageButton
 	self.BTN_Skill_Ulti = self.MainUI:WaitForChild("Skill_Ultimate_BTN") :: ImageButton
 
+	self.PlayerInfo = self.MainUI:WaitForChild("PlayerInfo") :: Frame
+	self.PlayerName = self.PlayerInfo:WaitForChild("Player name") :: TextLabel
+	self.PlayerName.Text = Player.Name
+	self.AvaFrame = self.PlayerInfo:FindFirstChild("Polygon 32 1").ImageLabel :: ImageLabel
+	local content, isReady =
+		Players:GetUserThumbnailAsync(Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+
+	-- if isReady then
+	self.AvaFrame.Image = content
+	-- end
 	-- Nút ATTACK
 	if self.BTN_Attack:IsA("ImageButton") then
 		self.BTN_Attack.MouseButton1Click:Connect(function()
@@ -120,7 +126,7 @@ if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
 	EditMobileCoreGUI()
 
 	local PlayerModule = require(Player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
-	local Controls = PlayerModule:GetControls()
+	PlayerModule:GetControls()
 	local TouchJumpButton = Player.PlayerGui:WaitForChild("TouchGui", 10)
 	if TouchJumpButton then
 		local jumpBtn = TouchJumpButton:FindFirstChild("JumpButton", true)
