@@ -51,7 +51,9 @@ function Class.new(): UI
 	-- Nút DASH (có debounce)
 	if self.BTN_Dash:IsA("ImageButton") then
 		self.BTN_Dash.MouseButton1Click:Connect(function()
-			Dash:DoDash()
+			if not Player:GetAttribute("IsAttacking") then
+				Dash:DoDash()
+			end
 		end)
 	end
 
@@ -85,7 +87,7 @@ function Class.new(): UI
 
 	if self.BTN_Skill_02:IsA("ImageButton") then
 		self.BTN_Skill_02.MouseButton1Click:Connect(function()
-			-- Client.Player_Action.Fire("SKILL_02", true)
+			Client.Player_Action.Fire("SKILL_02", true)
 			warn("Skill 2 Button Clicked")
 		end)
 	end

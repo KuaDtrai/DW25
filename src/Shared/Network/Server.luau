@@ -308,23 +308,15 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	VFX_Signal = {
-		Fire = function(Player: Player, Name: ("COMBO1" | "COMBO2" | "COMBO3" | "HIT"), Position: (CFrame))
+		Fire = function(Player: Player, Name: (string), Position: (CFrame))
 			load_player(Player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_5 = 0
-			local bool_5_pos_1 = alloc(1)
-			if Name == "COMBO1" then
-				bool_5 = bit32.bor(bool_5, 0b0000000000000001)
-			elseif Name == "COMBO2" then
-				bool_5 = bit32.bor(bool_5, 0b0000000000000010)
-			elseif Name == "COMBO3" then
-				bool_5 = bit32.bor(bool_5, 0b0000000000000100)
-			elseif Name == "HIT" then
-				bool_5 = bit32.bor(bool_5, 0b0000000000001000)
-			else
-				error("Invalid enumerator")
-			end
+			local len_1 = #Name
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
+			alloc(len_1)
+			buffer.writestring(outgoing_buff, outgoing_apos, Name, len_1)
 			local axis_1, angle_1 = Position:ToAxisAngle()
 			axis_1 = axis_1 * angle_1
 			alloc(4)
@@ -339,26 +331,17 @@ local returns = {
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Y)
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Z)
-			buffer.writeu8(outgoing_buff, bool_5_pos_1, bool_5)
 			player_map[Player] = save()
 		end,
-		FireAll = function(Name: ("COMBO1" | "COMBO2" | "COMBO3" | "HIT"), Position: (CFrame))
+		FireAll = function(Name: (string), Position: (CFrame))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_6 = 0
-			local bool_6_pos_1 = alloc(1)
-			if Name == "COMBO1" then
-				bool_6 = bit32.bor(bool_6, 0b0000000000000001)
-			elseif Name == "COMBO2" then
-				bool_6 = bit32.bor(bool_6, 0b0000000000000010)
-			elseif Name == "COMBO3" then
-				bool_6 = bit32.bor(bool_6, 0b0000000000000100)
-			elseif Name == "HIT" then
-				bool_6 = bit32.bor(bool_6, 0b0000000000001000)
-			else
-				error("Invalid enumerator")
-			end
+			local len_2 = #Name
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_2)
+			alloc(len_2)
+			buffer.writestring(outgoing_buff, outgoing_apos, Name, len_2)
 			local axis_2, angle_2 = Position:ToAxisAngle()
 			axis_2 = axis_2 * angle_2
 			alloc(4)
@@ -373,7 +356,6 @@ local returns = {
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_2.Y)
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_2.Z)
-			buffer.writeu8(outgoing_buff, bool_6_pos_1, bool_6)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in Players:GetPlayers() do
 				load_player(player)
@@ -383,23 +365,15 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireExcept = function(Except: Player, Name: ("COMBO1" | "COMBO2" | "COMBO3" | "HIT"), Position: (CFrame))
+		FireExcept = function(Except: Player, Name: (string), Position: (CFrame))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_7 = 0
-			local bool_7_pos_1 = alloc(1)
-			if Name == "COMBO1" then
-				bool_7 = bit32.bor(bool_7, 0b0000000000000001)
-			elseif Name == "COMBO2" then
-				bool_7 = bit32.bor(bool_7, 0b0000000000000010)
-			elseif Name == "COMBO3" then
-				bool_7 = bit32.bor(bool_7, 0b0000000000000100)
-			elseif Name == "HIT" then
-				bool_7 = bit32.bor(bool_7, 0b0000000000001000)
-			else
-				error("Invalid enumerator")
-			end
+			local len_3 = #Name
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_3)
+			alloc(len_3)
+			buffer.writestring(outgoing_buff, outgoing_apos, Name, len_3)
 			local axis_3, angle_3 = Position:ToAxisAngle()
 			axis_3 = axis_3 * angle_3
 			alloc(4)
@@ -414,7 +388,6 @@ local returns = {
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_3.Y)
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_3.Z)
-			buffer.writeu8(outgoing_buff, bool_7_pos_1, bool_7)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in Players:GetPlayers() do
 				if player ~= Except then
@@ -426,23 +399,15 @@ local returns = {
 				end
 			end
 		end,
-		FireList = function(List: { [unknown]: Player }, Name: ("COMBO1" | "COMBO2" | "COMBO3" | "HIT"), Position: (CFrame))
+		FireList = function(List: { [unknown]: Player }, Name: (string), Position: (CFrame))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_8 = 0
-			local bool_8_pos_1 = alloc(1)
-			if Name == "COMBO1" then
-				bool_8 = bit32.bor(bool_8, 0b0000000000000001)
-			elseif Name == "COMBO2" then
-				bool_8 = bit32.bor(bool_8, 0b0000000000000010)
-			elseif Name == "COMBO3" then
-				bool_8 = bit32.bor(bool_8, 0b0000000000000100)
-			elseif Name == "HIT" then
-				bool_8 = bit32.bor(bool_8, 0b0000000000001000)
-			else
-				error("Invalid enumerator")
-			end
+			local len_4 = #Name
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_4)
+			alloc(len_4)
+			buffer.writestring(outgoing_buff, outgoing_apos, Name, len_4)
 			local axis_4, angle_4 = Position:ToAxisAngle()
 			axis_4 = axis_4 * angle_4
 			alloc(4)
@@ -457,7 +422,6 @@ local returns = {
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_4.Y)
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_4.Z)
-			buffer.writeu8(outgoing_buff, bool_8_pos_1, bool_8)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in List do
 				load_player(player)
@@ -467,23 +431,15 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireSet = function(Set: { [Player]: any }, Name: ("COMBO1" | "COMBO2" | "COMBO3" | "HIT"), Position: (CFrame))
+		FireSet = function(Set: { [Player]: any }, Name: (string), Position: (CFrame))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_9 = 0
-			local bool_9_pos_1 = alloc(1)
-			if Name == "COMBO1" then
-				bool_9 = bit32.bor(bool_9, 0b0000000000000001)
-			elseif Name == "COMBO2" then
-				bool_9 = bit32.bor(bool_9, 0b0000000000000010)
-			elseif Name == "COMBO3" then
-				bool_9 = bit32.bor(bool_9, 0b0000000000000100)
-			elseif Name == "HIT" then
-				bool_9 = bit32.bor(bool_9, 0b0000000000001000)
-			else
-				error("Invalid enumerator")
-			end
+			local len_5 = #Name
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_5)
+			alloc(len_5)
+			buffer.writestring(outgoing_buff, outgoing_apos, Name, len_5)
 			local axis_5, angle_5 = Position:ToAxisAngle()
 			axis_5 = axis_5 * angle_5
 			alloc(4)
@@ -498,7 +454,6 @@ local returns = {
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_5.Y)
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, axis_5.Z)
-			buffer.writeu8(outgoing_buff, bool_9_pos_1, bool_9)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for player in Set do
 				load_player(player)

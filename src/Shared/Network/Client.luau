@@ -197,16 +197,8 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 		local id = buffer.readu8(buff, read(1))
 		if id == 0 then -- VFX_Signal
 			local value, value2
-			local bool_1 = buffer.readu8(incoming_buff, read(1))
-			if bit32.btest(bool_1, 0b0000000000000001) then
-				value = "COMBO1"
-			elseif bit32.btest(bool_1, 0b0000000000000010) then
-				value = "COMBO2"
-			elseif bit32.btest(bool_1, 0b0000000000000100) then
-				value = "COMBO3"
-			elseif bit32.btest(bool_1, 0b0000000000001000) then
-				value = "HIT"
-			end
+			local len_1 = buffer.readu16(incoming_buff, read(2))
+			value = buffer.readstring(incoming_buff, read(len_1), len_1)
 			local pos_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
 			local axisangle_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
 			local angle_1 = axisangle_1.Magnitude
@@ -244,7 +236,7 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	VFX_Signal = {
-		SetCallback = function(Callback: (Name: ("COMBO1" | "COMBO2" | "COMBO3" | "HIT"), Position: (CFrame)) -> ()): () -> ()
+		SetCallback = function(Callback: (Name: (string), Position: (CFrame)) -> ()): () -> ()
 			reliable_events[0] = Callback
 			for _, value in reliable_event_queue[0] do
 				task.spawn(Callback, unpack(value))
@@ -259,22 +251,22 @@ local returns = {
 		Fire = function(Value: ("LOBBY" | "LACDUONG" | "MAP1" | "MAP2" | "MAP3"))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
-			local bool_2 = 0
-			local bool_2_pos_1 = alloc(1)
+			local bool_1 = 0
+			local bool_1_pos_1 = alloc(1)
 			if Value == "LOBBY" then
-				bool_2 = bit32.bor(bool_2, 0b0000000000000001)
+				bool_1 = bit32.bor(bool_1, 0b0000000000000001)
 			elseif Value == "LACDUONG" then
-				bool_2 = bit32.bor(bool_2, 0b0000000000000010)
+				bool_1 = bit32.bor(bool_1, 0b0000000000000010)
 			elseif Value == "MAP1" then
-				bool_2 = bit32.bor(bool_2, 0b0000000000000100)
+				bool_1 = bit32.bor(bool_1, 0b0000000000000100)
 			elseif Value == "MAP2" then
-				bool_2 = bit32.bor(bool_2, 0b0000000000001000)
+				bool_1 = bit32.bor(bool_1, 0b0000000000001000)
 			elseif Value == "MAP3" then
-				bool_2 = bit32.bor(bool_2, 0b0000000000010000)
+				bool_1 = bit32.bor(bool_1, 0b0000000000010000)
 			else
 				error("Invalid enumerator")
 			end
-			buffer.writeu8(outgoing_buff, bool_2_pos_1, bool_2)
+			buffer.writeu8(outgoing_buff, bool_1_pos_1, bool_1)
 		end,
 	},
 	Skill = {
@@ -287,43 +279,43 @@ local returns = {
 		Fire = function(Action: ("ATTACK" | "SKILL_01" | "SKILL_02" | "SKILL_03" | "SKILL_ULTI" | "DASH" | "SKILL" | "BLOCK"), State: (boolean))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
-			local bool_3 = 0
-			local bool_3_pos_1 = alloc(2)
+			local bool_2 = 0
+			local bool_2_pos_1 = alloc(2)
 			if Action == "ATTACK" then
-				bool_3 = bit32.bor(bool_3, 0b0000000000000001)
+				bool_2 = bit32.bor(bool_2, 0b0000000000000001)
 			elseif Action == "SKILL_01" then
-				bool_3 = bit32.bor(bool_3, 0b0000000000000010)
+				bool_2 = bit32.bor(bool_2, 0b0000000000000010)
 			elseif Action == "SKILL_02" then
-				bool_3 = bit32.bor(bool_3, 0b0000000000000100)
+				bool_2 = bit32.bor(bool_2, 0b0000000000000100)
 			elseif Action == "SKILL_03" then
-				bool_3 = bit32.bor(bool_3, 0b0000000000001000)
+				bool_2 = bit32.bor(bool_2, 0b0000000000001000)
 			elseif Action == "SKILL_ULTI" then
-				bool_3 = bit32.bor(bool_3, 0b0000000000010000)
+				bool_2 = bit32.bor(bool_2, 0b0000000000010000)
 			elseif Action == "DASH" then
-				bool_3 = bit32.bor(bool_3, 0b0000000000100000)
+				bool_2 = bit32.bor(bool_2, 0b0000000000100000)
 			elseif Action == "SKILL" then
-				bool_3 = bit32.bor(bool_3, 0b0000000001000000)
+				bool_2 = bit32.bor(bool_2, 0b0000000001000000)
 			elseif Action == "BLOCK" then
-				bool_3 = bit32.bor(bool_3, 0b0000000010000000)
+				bool_2 = bit32.bor(bool_2, 0b0000000010000000)
 			else
 				error("Invalid enumerator")
 			end
 			if State then
-				bool_3 = bit32.bor(bool_3, 0b0000000100000000)
+				bool_2 = bit32.bor(bool_2, 0b0000000100000000)
 			end
-			buffer.writeu16(outgoing_buff, bool_3_pos_1, bool_3)
+			buffer.writeu16(outgoing_buff, bool_2_pos_1, bool_2)
 		end,
 	},
 	MatchMaking = {
 		Fire = function(Value: (boolean))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_4 = 0
-			local bool_4_pos_1 = alloc(1)
+			local bool_3 = 0
+			local bool_3_pos_1 = alloc(1)
 			if Value then
-				bool_4 = bit32.bor(bool_4, 0b0000000000000001)
+				bool_3 = bit32.bor(bool_3, 0b0000000000000001)
 			end
-			buffer.writeu8(outgoing_buff, bool_4_pos_1, bool_4)
+			buffer.writeu8(outgoing_buff, bool_3_pos_1, bool_3)
 		end,
 	},
 	Dash = {
@@ -348,12 +340,12 @@ local returns = {
 		Fire = function(Value: (boolean))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 6)
-			local bool_5 = 0
-			local bool_5_pos_1 = alloc(1)
+			local bool_4 = 0
+			local bool_4_pos_1 = alloc(1)
 			if Value then
-				bool_5 = bit32.bor(bool_5, 0b0000000000000001)
+				bool_4 = bit32.bor(bool_4, 0b0000000000000001)
 			end
-			buffer.writeu8(outgoing_buff, bool_5_pos_1, bool_5)
+			buffer.writeu8(outgoing_buff, bool_4_pos_1, bool_4)
 		end,
 	},
 	Attack = {

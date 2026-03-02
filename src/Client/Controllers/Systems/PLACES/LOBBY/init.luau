@@ -1,5 +1,7 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CONSTANTS = require(ReplicatedStorage.Shared.Libraries.CONSTANTS)
+
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
 export type System = {
@@ -12,7 +14,12 @@ local init = {
 	_Extensions = {},
 } :: System
 
-function init:_Setup() end
+function init:_Setup()
+	if game.PlaceId ~= CONSTANTS.LOBBY_ID then
+		script:Destroy()
+		return
+	end
+end
 
 function init:_Start() end
 

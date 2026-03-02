@@ -27,9 +27,6 @@ function Class.new(): First
 	)
 end
 
-----------------------------------------------------------------
--- PLAY ATTACK
-----------------------------------------------------------------
 function Class:play(character: Model)
 	if character:GetAttribute("IsAttacking") then
 		return
@@ -38,13 +35,10 @@ function Class:play(character: Model)
 	character:SetAttribute("IsAttacking", true)
 	warn("Sword 1 Attack")
 
-	-- ▶ ANIMATION
 	AttackAnimUtil.playFixedTime(character, Anim, ATTACK_TIME, FREEZE_TIME)
 
-	-- ▶ HITBOX
 	SpawnHitbox:createHitbox(character, ATTACK_TIME, Vector3.new(10, 3, 5))
 
-	-- ▶ CHO PHÉP COMBO TIẾP
 	task.delay(ATTACK_TIME, function()
 		character:SetAttribute("ComboIndex", 1)
 		character:SetAttribute("IsAttacking", false)

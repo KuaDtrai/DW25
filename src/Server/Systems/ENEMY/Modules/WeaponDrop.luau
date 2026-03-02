@@ -2,7 +2,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
-local WeaponFolder = ReplicatedStorage.Shared.Assets:WaitForChild("Weapon")
+local WeaponFolder = ReplicatedStorage.Shared.Assets.Items:WaitForChild("Weapon")
 
 local WeaponDrop = {}
 WeaponDrop.__index = WeaponDrop

@@ -3,9 +3,9 @@ local SpawnHitbox = require(script.Parent.Parent.SpawnHitbox)
 
 local AttackAnimUtil = require(script.Parent.Parent.AttackAnimationUtil)
 
-local Anim = "rbxassetid://138082426536940"
+local Anim = "rbxassetid://76224405313005"
 
-local ATTACK_TIME = 0.4
+local ATTACK_TIME = 0.5
 local FREEZE_TIME = 0.5
 
 export type First = {
@@ -33,14 +33,14 @@ function Class:play(character: Model)
 	end
 
 	character:SetAttribute("IsAttacking", true)
-	warn("Lance 1 Attack")
+	warn("Lance 3 Attack")
 
 	AttackAnimUtil.playFixedTime(character, Anim, ATTACK_TIME, FREEZE_TIME)
 
-	SpawnHitbox:createHitbox(character, ATTACK_TIME, Vector3.new(10, 3, 5))
+	SpawnHitbox:createHitbox(character, ATTACK_TIME, Vector3.new(5, 3, 10))
 
 	task.delay(ATTACK_TIME, function()
-		character:SetAttribute("ComboIndex", 1)
+		character:SetAttribute("ComboIndex", 3)
 		character:SetAttribute("IsAttacking", false)
 	end)
 end

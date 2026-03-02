@@ -20,7 +20,7 @@ event VFX_Signal = {
     type: Reliable,
     call: SingleAsync,
     data: (
-        Name: enum{COMBO1, COMBO2, COMBO3, HIT},
+        Name: string.binary,
         Position: CFrame,
     ),
 }

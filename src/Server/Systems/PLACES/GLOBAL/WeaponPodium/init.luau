@@ -3,10 +3,7 @@
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local pickupCooldown = {}
-local PICKUP_DELAY = 0.5
-
-local WeaponAssets = ReplicatedStorage.Shared.Assets.Weapon
+local WeaponFolder = ReplicatedStorage.Shared.Assets.Items:WaitForChild("Weapon")
 
 local Openday = require(ReplicatedStorage.Shared.Openday)
 
@@ -22,125 +19,96 @@ local WeaponPickupSystem = {
 
 local TAG = "WEAPON_PODIUM"
 
-local WEAPON_CFRAME = CFrame.Angles(math.rad(-90), math.rad(90), 0)
-
-local function getWeaponType(pickupModel: Instance): string?
-	if pickupModel:HasTag("WEAPON_SWORD") then
-		return "SWORD"
-	elseif pickupModel:HasTag("WEAPON_LANCE") then
-		return "LANCE"
-	elseif pickupModel:HasTag("WEAPON_GREATSWORD") then
-		return "GREATSWORD"
-	end
-	return nil
-end
+local DEFAULT_OFFSET = CFrame.Angles(math.rad(-90), math.rad(90), 0)
 
 local function pickupWeapon(prompt: ProximityPrompt, player: Player)
-	local uid = player.UserId
-	if pickupCooldown[uid] then
-		return
-	end
-
-	pickupCooldown[uid] = true
-	task.delay(PICKUP_DELAY, function()
-		pickupCooldown[uid] = nil
-	end)
-
 	local character = player.Character
 	if not character then
 		return
 	end
 
-	local rightHand = character:FindFirstChild("RightHand")
+	local rightHand = character:FindFirstChild("RightHand") :: BasePart?
 	if not rightHand then
 		warn("Không tìm thấy RightHand!")
 		return
 	end
 
-	local handle = prompt.Parent
-	if not handle or not handle:IsA("BasePart") then
+	local worldWeapon = prompt.Parent.Parent :: MeshPart?
+	if not worldWeapon or not worldWeapon:IsA("Model") then
+		warn("Weapon ngoài map không hợp lệ")
 		return
 	end
 
-	-- tìm model pickup
-	local pickupModel = handle:FindFirstAncestorWhichIsA("Model") or handle
-
-	----------------------------------------------------
-	-- XÁC ĐỊNH LOẠI VŨ KHÍ
-	----------------------------------------------------
-	local weaponType = getWeaponType(pickupModel)
-	if weaponType then
-		character:SetAttribute("EquippedWeapon", weaponType)
-	end
-
-	----------------------------------------------------
-	-- 🔥 DROP VŨ KHÍ CŨ
-	----------------------------------------------------
-	local oldWeapon = rightHand:FindFirstChild("Weapon")
+	-------------------------------------------------------
+	-- 🔥 XOÁ VŨ KHÍ CŨ (NẾU CÓ)
+	-------------------------------------------------------
+	local oldWeapon = character:FindFirstChild("Weapon")
 	if oldWeapon then
 		local oldMotor = rightHand:FindFirstChild("WeaponGrip")
 		if oldMotor then
 			oldMotor:Destroy()
 		end
-
-		oldWeapon.Parent = workspace
-
-		for _, part in ipairs(oldWeapon:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.Anchored = false
-				part.CanCollide = true
-			end
-		end
-
-		local dropPos = rightHand.Position - Vector3.new(0, 1, 0)
-		if oldWeapon:IsA("Model") and oldWeapon.PrimaryPart then
-			oldWeapon:SetPrimaryPartCFrame(CFrame.new(dropPos))
-		end
+		oldWeapon:Destroy()
 	end
 
-	----------------------------------------------------
-	-- 🔥 CLONE VŨ KHÍ MỚI TỪ REPLICATEDSTORAGE
-	----------------------------------------------------
-	local weaponTemplate = WeaponAssets:FindFirstChild("Weapon")
-	if not weaponTemplate then
-		warn("Không tìm thấy Weapon asset!")
+	-------------------------------------------------------
+	-- 🔥 XÁC ĐỊNH TEMPLATE TỪ TAG
+	-------------------------------------------------------
+	local template: MeshPart? = nil
+
+	if CollectionService:HasTag(worldWeapon, "WEAPON_SWORD") then
+		template = WeaponFolder:FindFirstChild("Sword") :: MeshPart?
+		character:SetAttribute("EquippedWeapon", "SWORD")
+	elseif CollectionService:HasTag(worldWeapon, "WEAPON_LANCE") then
+		template = WeaponFolder:FindFirstChild("Lance") :: MeshPart?
+		character:SetAttribute("EquippedWeapon", "LANCE")
+	elseif CollectionService:HasTag(worldWeapon, "WEAPON_GREATSWORD") then
+		template = WeaponFolder:FindFirstChild("Greatsword") :: MeshPart?
+		character:SetAttribute("EquippedWeapon", "GREATSWORD")
+	else
+		warn(worldWeapon:GetTags())
+	end
+
+	if not template then
+		warn("Không tìm thấy template vũ khí")
 		return
 	end
 
-	local newWeapon = weaponTemplate:Clone()
+	-------------------------------------------------------
+	-- 🔥 CLONE VŨ KHÍ VÀO NHÂN VẬT
+	-------------------------------------------------------
+	local newWeapon = template:Clone()
 	newWeapon.Name = "Weapon"
-	newWeapon.Parent = rightHand
+	newWeapon.Parent = character
+	newWeapon.Anchored = false
+	newWeapon.CanCollide = false
 
-	for _, part in ipairs(newWeapon:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Anchored = false
-			part.CanCollide = false
-		end
-		if part:IsA("ProximityPrompt") then
-			part:Destroy()
-		end
-	end
-
-	----------------------------------------------------
-	-- GẮN VÀO TAY
-	----------------------------------------------------
-	local weaponHandle = newWeapon.PrimaryPart or newWeapon:FindFirstChildWhichIsA("BasePart")
-
-	if not weaponHandle then
-		warn("Weapon không có BasePart!")
-		newWeapon:Destroy()
-		return
-	end
-
+	-------------------------------------------------------
+	-- 🔥 TẠO MOTOR6D
+	-------------------------------------------------------
 	local motor = Instance.new("Motor6D")
 	motor.Name = "WeaponGrip"
 	motor.Part0 = rightHand
-	motor.Part1 = weaponHandle
-	motor.C0 = WEAPON_CFRAME
+	motor.Part1 = newWeapon
+
+	-- lấy offset từ attribute trên vũ khí
+	local offset = newWeapon:GetAttribute("Offset")
+	if typeof(offset) == "CFrame" then
+		motor.C0 = offset
+	else
+		motor.C0 = DEFAULT_OFFSET
+	end
+
 	motor.C1 = CFrame.new()
 	motor.Parent = rightHand
 
-	print(player.Name, "đã nhặt vũ khí", weaponType or "")
+	newWeapon:FindFirstChild("ProximityPrompt").Enabled = false
+	-------------------------------------------------------
+	-- 🔥 XOÁ VŨ KHÍ NGOÀI MAP
+	-------------------------------------------------------
+	-- worldWeapon:Destroy()
+
+	print(player.Name .. " đã nhặt " .. template.Name)
 end
 
 -- setup prompt
@@ -149,18 +117,22 @@ local function setupPrompt(prompt: Instance)
 		return
 	end
 
+	print("Đã connect prompt:", prompt:GetFullName())
+
 	prompt.Triggered:Connect(function(player)
+		print(player.Name .. " triggered prompt")
 		task.spawn(pickupWeapon, prompt, player)
 	end)
 end
 
 function WeaponPickupSystem:_Start()
-	for _, obj in CollectionService:GetTagged(TAG) do
+	for _, obj in ipairs(CollectionService:GetTagged(TAG)) do
 		setupPrompt(obj)
 	end
 
 	CollectionService:GetInstanceAddedSignal(TAG):Connect(setupPrompt)
-	print("[WeaponPickupSystem] Start")
+
+	print("[WeaponPodiumSystem] Start")
 end
 
 function WeaponPickupSystem:_Setup() end

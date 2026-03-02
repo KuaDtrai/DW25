@@ -39,13 +39,16 @@ function init:_Start()
 			end
 			local pos = Player.Character.PrimaryPart.CFrame.Position
 			self.UseFirework:Use(Player, pos)
+		elseif Action == "SKILL_02" then
+			warn("Swap Avatar")
+			self.SwapAvatar.Swap(Player)
 		end
 	end)
 
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function(character)
 			character:SetAttribute("ComboIndex", 0)
-			character:SetAttribute("Damage", 20)
+			character:SetAttribute("Damage", 10)
 			character:SetAttribute("Dashing", true)
 			character:SetAttribute("EquippedWeapon", "")
 			character:SetAttribute("IsAttacking", false)
